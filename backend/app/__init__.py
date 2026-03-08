@@ -1,0 +1,1 @@
+"""NovaPilot backend application package."""
