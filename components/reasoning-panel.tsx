@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface ReasoningPanelProps {
   reasoning: string;
@@ -6,22 +6,19 @@ interface ReasoningPanelProps {
 
 export function ReasoningPanel({ reasoning }: ReasoningPanelProps) {
   return (
-    <div className="bg-zinc-900 rounded-3xl p-8 relative overflow-hidden shadow-xl">
-      <div className="absolute top-0 right-0 p-8 opacity-5">
-        <Brain className="w-32 h-32 text-white" />
-      </div>
-      <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="bg-white/10 p-2 rounded-xl text-white backdrop-blur-sm">
-            <Brain className="w-5 h-5" />
-          </div>
-          <h3 className="text-xl font-display font-bold text-white">
+    <div className="bg-white rounded-xl p-6 md:p-8 border border-zinc-200 shadow-sm relative">
+      <div className="flex items-start gap-4">
+        <div className="bg-zinc-100 p-2 rounded-lg text-zinc-900 flex-shrink-0 mt-1">
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-zinc-900 mb-2">
             AI Reasoning
           </h3>
+          <p className="text-sm text-zinc-700 leading-relaxed max-w-3xl">
+            {reasoning}
+          </p>
         </div>
-        <p className="text-base text-zinc-300 leading-relaxed max-w-3xl">
-          {reasoning}
-        </p>
       </div>
     </div>
   );

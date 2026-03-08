@@ -9,9 +9,9 @@ interface HomeSearchProps {
 }
 
 const SUGGESTIONS = [
-  "Compare the best phones under ₦500,000",
-  "Find the best laptop for programming under ₦900,000",
-  "Compare 3 tablets for graphic design",
+  "Best phones under ₦500k",
+  "Laptop for programming under ₦900k",
+  "Tablets for graphic design",
 ];
 
 export function HomeSearch({ onSearch }: HomeSearchProps) {
@@ -26,13 +26,10 @@ export function HomeSearch({ onSearch }: HomeSearchProps) {
 
   return (
     <div className="flex flex-col items-center w-full">
-      <div className="mb-10 flex flex-col items-center text-center">
-        <h1 className="text-4xl sm:text-6xl font-display font-bold tracking-tight text-zinc-900 mb-6">
-          What are you looking for?
+      <div className="mb-8 flex flex-col items-center text-center">
+        <h1 className="text-3xl sm:text-4xl font-sans font-semibold tracking-tight text-zinc-900 mb-4">
+          Where knowledge begins
         </h1>
-        <p className="text-lg text-zinc-500 max-w-xl">
-          Describe what you need, and NovaPilot will search, compare, and recommend the best options across the web.
-        </p>
       </div>
 
       <SearchInput query={query} setQuery={setQuery} onSubmit={handleSubmit} />

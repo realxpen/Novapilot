@@ -5,16 +5,13 @@ interface ExamplePromptListProps {
 
 export function ExamplePromptList({ suggestions, onSelect }: ExamplePromptListProps) {
   return (
-    <div className="mt-10 w-full">
-      <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4 text-center">
-        Try these examples
-      </p>
+    <div className="mt-8 w-full">
       <div className="flex flex-wrap gap-2 justify-center">
         {suggestions.map((suggestion, index) => (
           <button
             key={index}
             onClick={() => onSelect(suggestion)}
-            className="px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm text-zinc-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm"
+            className="px-3 py-1.5 bg-zinc-100/80 hover:bg-zinc-200/80 border border-transparent rounded-full text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-all flex items-center gap-1.5"
           >
             {suggestion}
           </button>

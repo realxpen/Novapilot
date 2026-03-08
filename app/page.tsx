@@ -55,7 +55,7 @@ export default function Page() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-5xl"
+              className="w-full max-w-4xl"
             >
               <ProgressTimeline query={searchQuery} />
             </motion.div>
@@ -68,7 +68,7 @@ export default function Page() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-6xl"
+              className="w-full max-w-4xl"
             >
               <ResultsDashboard query={searchQuery} onReset={handleReset} />
             </motion.div>

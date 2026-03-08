@@ -88,7 +88,7 @@ const REASONING_TEXT = "NovaPilot recommends the Dell XPS 13 because it offers t
 
 export function ResultsDashboard({ query, onReset }: ResultsDashboardProps) {
   return (
-    <div className="w-full pb-20 max-w-5xl mx-auto">
+    <div className="w-full pb-20 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <button
           onClick={onReset}
@@ -97,13 +97,13 @@ export function ResultsDashboard({ query, onReset }: ResultsDashboardProps) {
           <ArrowLeft className="w-4 h-4" />
           Back to Search
         </button>
-        <div className="text-sm text-zinc-500 truncate max-w-md bg-white px-4 py-2 rounded-full shadow-sm border border-zinc-100">
-          <span className="font-medium text-zinc-900">Query:</span> &quot;
-          {query}&quot;
+        <div className="text-sm text-zinc-600 truncate max-w-md bg-zinc-100/80 px-3 py-1.5 rounded-md border border-zinc-200/50 flex items-center gap-2">
+          <span className="font-semibold text-zinc-900">Query:</span>
+          <span className="truncate">&quot;{query}&quot;</span>
         </div>
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-8">
         {/* Top Section: Best Recommendation Card */}
         <section>
           <RecommendationCard recommendation={BEST_RECOMMENDATION} />
@@ -111,10 +111,10 @@ export function ResultsDashboard({ query, onReset }: ResultsDashboardProps) {
 
         {/* Second Section: Alternative Options */}
         <section>
-          <h3 className="text-xl font-display font-bold text-zinc-900 mb-6 flex items-center gap-2">
+          <h3 className="text-lg font-sans font-semibold text-zinc-900 mb-4 flex items-center gap-2">
             Alternative Options
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {ALTERNATIVES.map((alt) => (
               <ProductCard key={alt.id} product={alt} />
             ))}
@@ -123,7 +123,7 @@ export function ResultsDashboard({ query, onReset }: ResultsDashboardProps) {
 
         {/* Third Section: Comparison Table */}
         <section>
-          <h3 className="text-xl font-display font-bold text-zinc-900 mb-6">
+          <h3 className="text-lg font-sans font-semibold text-zinc-900 mb-4">
             Comparison Table
           </h3>
           <ComparisonTable data={COMPARISON_DATA} />

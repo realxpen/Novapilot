@@ -16,8 +16,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-zinc-200 hover:border-indigo-300 transition-colors cursor-pointer group flex gap-5">
-      <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-zinc-100 flex-shrink-0">
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-zinc-200 hover:border-zinc-300 transition-colors cursor-pointer group flex gap-4">
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-zinc-50 flex-shrink-0 border border-zinc-100">
         <Image
           src={product.image}
           alt={product.name}
@@ -27,22 +27,22 @@ export function ProductCard({ product }: ProductCardProps) {
         />
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <h4 className="font-bold text-zinc-900 text-base truncate mb-1">
+        <h4 className="font-semibold text-zinc-900 text-sm truncate mb-0.5">
           {product.name}
         </h4>
-        <div className="text-indigo-600 font-bold text-sm mb-1.5">
+        <div className="text-zinc-900 font-bold text-sm mb-1">
           {product.price}
         </div>
-        <div className="text-xs text-zinc-500 truncate mb-3">
+        <div className="text-[11px] text-zinc-500 truncate mb-2">
           {product.keySpec}
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-zinc-600 bg-zinc-100 px-2 py-1 rounded-md flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded flex items-center gap-1">
             <ShoppingCart className="w-3 h-3" />
             {product.store}
           </span>
-          <span className="flex items-center gap-1 text-xs font-medium text-zinc-600">
-            <Sparkles className="w-3 h-3 text-indigo-500" />
+          <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-500">
+            <Sparkles className="w-3 h-3 text-zinc-400" />
             Score: {product.score}
           </span>
         </div>
