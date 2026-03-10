@@ -73,8 +73,9 @@ class InterpreterService:
         lowered = query.lower()
         currency = "NGN" if "\u20A6" in query or "ngn" in lowered or "naira" in lowered else "USD"
         patterns = [
-            r"(?:under|below|less than)\s*(?:\u20A6|\$)?\s*([\d,]+(?:\.\d+)?)",
+            r"(?:under|below|less than)\s*(?:\u20A6|\$|ngn|usd|naira)?\s*([\d,]+(?:\.\d+)?)",
             r"(?:\u20A6|\$)\s*([\d,]+(?:\.\d+)?)",
+            r"(?:ngn|usd)\s*([\d,]+(?:\.\d+)?)",
         ]
         for pattern in patterns:
             match = re.search(pattern, query, flags=re.IGNORECASE)

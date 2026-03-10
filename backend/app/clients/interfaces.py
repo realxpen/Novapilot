@@ -26,6 +26,21 @@ class ReportGenerationClient(Protocol):
         """Return natural-language reasoning text or None if unavailable."""
 
 
+class SiteRecommendationClient(Protocol):
+    """Interface for site recommendation providers."""
+
+    def recommend_sites(
+        self,
+        query: str,
+        user_location: Optional[str],
+        category: str,
+        budget_currency: str,
+        budget_max: Optional[float],
+        allowed_sites: List[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Return recommended sites and metadata or None if unavailable."""
+
+
 class StoreAutomationClient(Protocol):
     """Interface for store automation providers."""
 

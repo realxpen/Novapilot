@@ -1,5 +1,7 @@
-import { Award, Sparkles, ShoppingCart, Star, Cpu, HardDrive, CheckCircle2, ExternalLink } from "lucide-react";
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Award, Sparkles, ShoppingCart, Star, Cpu, HardDrive, CheckCircle2, ExternalLink, ImageOff } from "lucide-react";
 
 interface RecommendationCardProps {
   recommendation: {
@@ -17,10 +19,13 @@ interface RecommendationCardProps {
       battery: string;
     };
     reason: string;
+    url?: string;
   };
 }
 
 export function RecommendationCard({ recommendation }: RecommendationCardProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden relative group">
       <div className="absolute top-3 left-3 z-10 bg-zinc-900 text-white text-[10px] font-bold uppercase tracking-wider py-1 px-2 rounded flex items-center gap-1">
@@ -35,13 +40,22 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
 
       <div className="grid grid-cols-1 md:grid-cols-5">
         <div className="relative h-48 md:h-auto md:col-span-2 w-full bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-100">
-          <Image
-            src={recommendation.image}
-            alt={recommendation.name}
-            fill
-            className="object-cover"
-            referrerPolicy="no-referrer"
-          />
+          {!imageFailed ? (
+            <img
+              src={recommendation.image}
+              alt={recommendation.name}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500 bg-zinc-100">
+              <ImageOff className="w-7 h-7 mb-2" />
+              <p className="text-xs font-medium mb-1">Image unavailable</p>
+              <p className="text-xs text-zinc-400 line-clamp-2">{recommendation.name}</p>
+            </div>
+          )}
         </div>
 
         <div className="p-6 md:col-span-3 flex flex-col justify-center">
@@ -91,10 +105,24 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
             </p>
           </div>
 
-          <button className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
-            Buy on {recommendation.store}
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+          {recommendation.url ? (
+            <a
+              href={recommendation.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+            >
+              View on {recommendation.store}
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <button
+              disabled
+              className="w-full py-2.5 bg-zinc-300 text-zinc-500 rounded-lg text-sm font-medium flex items-center justify-center gap-2 shadow-sm cursor-not-allowed"
+            >
+              Link unavailable
+            </button>
+          )}
         </div>
       </div>
     </div>

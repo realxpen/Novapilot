@@ -1,92 +1,79 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { RecommendationCard } from "./recommendation-card";
 import { ProductCard } from "./product-card";
 import { ComparisonTable } from "./comparison-table";
 import { ReasoningPanel } from "./reasoning-panel";
 
+export interface Product {
+  name: string;
+  store: string;
+  price: number;
+  currency: string;
+  rating?: number | null;
+  ram_gb?: number | null;
+  storage_gb?: number | null;
+  cpu?: string | null;
+  gpu?: string | null;
+  screen_size?: string | null;
+  url?: string | null;
+  score?: number | null;
+  image_url?: string | null;
+  short_reason?: string | null;
+}
+
+export interface NovaPilotResponse {
+  status: string;
+  query: string;
+  interpreted_request: {
+    category: string;
+    budget_currency: string;
+    budget_max?: number | null;
+    use_case: string;
+    priority_specs: string[];
+    top_n: number;
+  };
+  execution_log: Array<{
+    step_id: string;
+    label: string;
+    status: string;
+    timestamp: string;
+    details?: Record<string, unknown> | null;
+  }>;
+  best_pick?: Product | null;
+  alternatives: Product[];
+  comparison_table: Product[];
+  reasoning: string;
+  warnings?: string[] | null;
+}
+
 interface ResultsDashboardProps {
   query: string;
   onReset: () => void;
+  result: NovaPilotResponse | null;
+  error: string | null;
 }
 
-const BEST_RECOMMENDATION = {
-  name: 'Dell XPS 13 (2024)',
-  price: "₦785,000",
-  store: "Amazon",
-  rating: 4.8,
-  score: 98,
-  image: "https://picsum.photos/seed/dellxps/800/600",
-  specs: {
-    cpu: "Intel Core Ultra 7",
-    ram: "16GB LPDDR5x",
-    storage: "512GB PCIe SSD",
-    display: '13.4" FHD+ InfinityEdge',
-    battery: "Up to 14 hours",
-  },
-  reason: "Offers the best balance of performance, RAM, and price for UI/UX design workloads while remaining within the ₦800,000 budget.",
-};
+function formatPrice(price: number, currency: string): string {
+  const locale = currency.toUpperCase() === "NGN" ? "en-NG" : "en-US";
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    maximumFractionDigits: 0,
+  }).format(price);
+}
 
-const ALTERNATIVES = [
-  {
-    id: 1,
-    name: "MacBook Air M2 (13-inch)",
-    price: "₦795,000",
-    store: "Jumia",
-    rating: 4.9,
-    score: 95,
-    image: "https://picsum.photos/seed/macbookair/400/300",
-    keySpec: "Apple M2, 8GB RAM, 256GB SSD",
-  },
-  {
-    id: 2,
-    name: "ASUS Zenbook 14 OLED",
-    price: "₦720,000",
-    store: "Konga",
-    rating: 4.6,
-    score: 92,
-    image: "https://picsum.photos/seed/zenbook/400/300",
-    keySpec: "Ryzen 7, 16GB RAM, 512GB SSD",
-  },
-];
+function fallbackImage(product: Product): string {
+  const label = encodeURIComponent(`${product.name}`.slice(0, 48));
+  return `https://placehold.co/800x600/f4f4f5/27272a?text=${label}`;
+}
 
-const COMPARISON_DATA = [
-  {
-    product: "Dell XPS 13 (2024)",
-    price: "₦785,000",
-    ram: "16GB",
-    storage: "512GB",
-    cpu: "Core Ultra 7",
-    rating: "4.8",
-    score: "98/100",
-    isBest: true,
-  },
-  {
-    product: "MacBook Air M2",
-    price: "₦795,000",
-    ram: "8GB",
-    storage: "256GB",
-    cpu: "Apple M2",
-    rating: "4.9",
-    score: "95/100",
-    isBest: false,
-  },
-  {
-    product: "ASUS Zenbook 14",
-    price: "₦720,000",
-    ram: "16GB",
-    storage: "512GB",
-    cpu: "Ryzen 7",
-    rating: "4.6",
-    score: "92/100",
-    isBest: false,
-  },
-];
+export function ResultsDashboard({ query, onReset, result, error }: ResultsDashboardProps) {
+  const bestPick = result?.best_pick ?? null;
+  const alternatives = result?.alternatives ?? [];
+  const comparison = result?.comparison_table ?? [];
 
-const REASONING_TEXT = "NovaPilot recommends the Dell XPS 13 because it offers the best balance of performance, RAM, and price for UI/UX design workloads while remaining within the ₦800,000 budget. The Intel Core Ultra 7 processor combined with 16GB of LPDDR5x RAM ensures smooth multitasking across Figma, Adobe Creative Cloud, and multiple browser tabs. While the MacBook Air M2 is a strong contender, its base 8GB RAM configuration may bottleneck heavy design files, making the XPS 13 the more future-proof choice at this price point.";
-
-export function ResultsDashboard({ query, onReset }: ResultsDashboardProps) {
   return (
     <div className="w-full pb-20 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -103,37 +90,118 @@ export function ResultsDashboard({ query, onReset }: ResultsDashboardProps) {
         </div>
       </div>
 
-      <div className="space-y-8">
-        {/* Top Section: Best Recommendation Card */}
-        <section>
-          <RecommendationCard recommendation={BEST_RECOMMENDATION} />
-        </section>
+      {error && (
+        <div className="mb-6 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg p-4 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 mt-0.5" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
-        {/* Second Section: Alternative Options */}
-        <section>
-          <h3 className="text-lg font-sans font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-            Alternative Options
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ALTERNATIVES.map((alt) => (
-              <ProductCard key={alt.id} product={alt} />
-            ))}
+      {result?.warnings && result.warnings.length > 0 && (
+        <div className="mb-6 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5" />
+            <div className="space-y-1">
+              {result.warnings.map((warning) => (
+                <p key={warning} className="text-sm">
+                  {warning}
+                </p>
+              ))}
+            </div>
           </div>
-        </section>
+        </div>
+      )}
 
-        {/* Third Section: Comparison Table */}
-        <section>
-          <h3 className="text-lg font-sans font-semibold text-zinc-900 mb-4">
-            Comparison Table
-          </h3>
-          <ComparisonTable data={COMPARISON_DATA} />
-        </section>
+      {!result && !error && (
+        <div className="bg-white rounded-xl p-6 border border-zinc-200 text-sm text-zinc-600">
+          No result available yet. Submit a query to fetch recommendations.
+        </div>
+      )}
 
-        {/* Fourth Section: AI Reasoning Panel */}
-        <section>
-          <ReasoningPanel reasoning={REASONING_TEXT} />
-        </section>
-      </div>
+      {result && (
+        <div className="space-y-8">
+          {bestPick && (
+            <section>
+              <RecommendationCard
+                recommendation={{
+                  name: bestPick.name,
+                  price: formatPrice(bestPick.price, bestPick.currency),
+                  store: bestPick.store,
+                  rating: bestPick.rating ?? 0,
+                  score: bestPick.score ?? 0,
+                  image: bestPick.image_url || fallbackImage(bestPick),
+                  specs: {
+                    cpu: bestPick.cpu || "Not specified",
+                    ram: bestPick.ram_gb ? `${bestPick.ram_gb}GB` : "Not specified",
+                    storage: bestPick.storage_gb ? `${bestPick.storage_gb}GB` : "Not specified",
+                    display: bestPick.screen_size || "Not specified",
+                    battery: "Not specified",
+                  },
+                  reason: bestPick.short_reason || "Selected based on overall ranking performance.",
+                  url: bestPick.url || undefined,
+                }}
+              />
+            </section>
+          )}
+
+          <section>
+            <h3 className="text-lg font-sans font-semibold text-zinc-900 mb-4">Alternative Options</h3>
+            {alternatives.length === 0 ? (
+              <div className="bg-white rounded-xl p-4 border border-zinc-200 text-sm text-zinc-500">
+                No alternatives available.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {alternatives.map((alt) => (
+                  <ProductCard
+                    key={`${alt.store}-${alt.name}`}
+                    product={{
+                      id: `${alt.store}-${alt.name}`,
+                      name: alt.name,
+                      price: formatPrice(alt.price, alt.currency),
+                      store: alt.store,
+                      rating: alt.rating ?? 0,
+                      score: alt.score ?? 0,
+                      image: alt.image_url || fallbackImage(alt),
+                      keySpec: `${alt.cpu || "Unknown CPU"}, ${alt.ram_gb ? `${alt.ram_gb}GB RAM` : "RAM n/a"}, ${alt.storage_gb ? `${alt.storage_gb}GB` : "Storage n/a"}`,
+                      url: alt.url || undefined,
+                      details: {
+                        cpu: alt.cpu || "Not specified",
+                        ram: alt.ram_gb ? `${alt.ram_gb}GB` : "Not specified",
+                        storage: alt.storage_gb ? `${alt.storage_gb}GB` : "Not specified",
+                        gpu: alt.gpu || "Not specified",
+                        screen: alt.screen_size || "Not specified",
+                        reason: alt.short_reason || "Alternative based on ranking.",
+                      },
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h3 className="text-lg font-sans font-semibold text-zinc-900 mb-4">Comparison Table</h3>
+            <ComparisonTable
+              data={comparison.map((item, idx) => ({
+                product: item.name,
+                price: formatPrice(item.price, item.currency),
+                ram: item.ram_gb ? `${item.ram_gb}GB` : "n/a",
+                storage: item.storage_gb ? `${item.storage_gb}GB` : "n/a",
+                cpu: item.cpu || "n/a",
+                rating: item.rating ? `${item.rating}` : "n/a",
+                score: item.score ? `${item.score.toFixed(2)}/10` : "n/a",
+                isBest: idx === 0,
+                url: item.url || undefined,
+              }))}
+            />
+          </section>
+
+          <section>
+            <ReasoningPanel reasoning={result.reasoning} />
+          </section>
+        </div>
+      )}
     </div>
   );
 }

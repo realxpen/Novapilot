@@ -1,4 +1,4 @@
-import { Award, Star } from "lucide-react";
+import { Award, Star, ExternalLink } from "lucide-react";
 
 interface ComparisonTableProps {
   data: {
@@ -10,6 +10,7 @@ interface ComparisonTableProps {
     rating: string;
     score: string;
     isBest: boolean;
+    url?: string;
   }[];
 }
 
@@ -27,6 +28,7 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
               <th className="px-6 py-3 font-medium">CPU</th>
               <th className="px-6 py-3 font-medium">Rating</th>
               <th className="px-6 py-3 font-medium">Score</th>
+              <th className="px-6 py-3 font-medium">Link</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
@@ -45,6 +47,21 @@ export function ComparisonTable({ data }: ComparisonTableProps) {
                   {row.rating}
                 </td>
                 <td className="px-6 py-4 font-medium text-zinc-900 text-sm">{row.score}</td>
+                <td className="px-6 py-4 text-xs">
+                  {row.url ? (
+                    <a
+                      href={row.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1 text-zinc-800 hover:text-zinc-950 underline underline-offset-2"
+                    >
+                      View
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : (
+                    <span className="text-zinc-400">n/a</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

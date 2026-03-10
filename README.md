@@ -1,20 +1,43 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# NovaPilot
 
-# Run and deploy your AI Studio app
+NovaPilot is a shopping comparison app with a Next.js frontend and a FastAPI backend.
+The frontend sends shopping queries to the backend, which interprets the request,
+selects stores, runs store automation, normalizes results, ranks products, and
+returns recommendations.
 
-This contains everything you need to run your app locally.
+## Local Setup
 
-View your app in AI Studio: https://ai.studio/apps/59dccfe0-bbb2-46de-bfdd-e1a93c1a6d5d
+### Prerequisites
 
-## Run Locally
+- Node.js
+- Python 3.11+
 
-**Prerequisites:**  Node.js
-
+### Frontend
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Copy `.env.local.example` to `.env.local`.
+3. Run the frontend:
    `npm run dev`
+
+### Backend
+
+1. Create and activate a virtual environment:
+   `python -m venv .venv`
+   `.venv\Scripts\Activate.ps1`
+2. Install dependencies:
+   `pip install -r backend/requirements.txt`
+3. Copy `backend/.env.example` to `backend/.env` or repo `.env`.
+4. Run the API:
+   `uvicorn backend.app.main:app --reload`
+
+## Environment Files
+
+- Frontend uses `.env.local`.
+- Backend loads `backend/.env` first, then repo `.env`.
+
+## Default Site Policy
+
+- If the query names sites, NovaPilot uses those sites only.
+- If the query does not name sites, Nova Lite recommends sites using location, category, budget, and expected availability.
+- For Nigeria, the fallback priority is `jumia`, `konga`, `slot`, `jiji`, then `amazon` when relevant.

@@ -19,17 +19,17 @@ class ExtractionService:
         """Normalize products from one store with graceful field handling."""
         normalized: List[Product] = []
         for item in raw_products:
-            if site == "jumia":
-                normalized.append(self._normalize_jumia(item))
+            if site in {"jumia", "konga", "slot", "jiji"}:
+                normalized.append(self._normalize_marketplace(site, item))
             elif site == "amazon":
                 normalized.append(self._normalize_amazon(item))
         return normalized
 
-    def _normalize_jumia(self, item: Dict[str, Any]) -> Product:
+    def _normalize_marketplace(self, site: str, item: Dict[str, Any]) -> Product:
         specs = item.get("specs", "")
         return Product(
             name=item.get("title", "Unknown Product"),
-            store="jumia",
+            store=site,
             price=parse_price(item.get("price_text")),
             currency=normalize_currency(item.get("currency")),
             rating=parse_price(item.get("rating_text")),
