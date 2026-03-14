@@ -1,4 +1,4 @@
-"""Helpers for normalizing raw scraped/mock data."""
+"""Helpers for normalizing raw scraped data."""
 
 import re
 from typing import Optional

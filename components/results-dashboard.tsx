@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -150,6 +150,49 @@ const GUIDANCE_REFERENCE_IMAGES: Record<string, GuidanceCard> = {
   },
 };
 
+function easeInOutCubic(value: number): number {
+  if (value < 0.5) {
+    return 4 * value * value * value;
+  }
+  return 1 - Math.pow(-2 * value + 2, 3) / 2;
+}
+
+function animateViewportTo(element: HTMLElement | null, offset = 24, duration = 900): void {
+  if (!element || typeof window === "undefined") {
+    return;
+  }
+
+  const startY = window.scrollY;
+  const targetY = Math.max(0, window.scrollY + element.getBoundingClientRect().top - offset);
+  const distance = targetY - startY;
+
+  if (Math.abs(distance) < 8) {
+    return;
+  }
+
+  let frameId = 0;
+  const startedAt = performance.now();
+
+  const tick = (now: number) => {
+    const elapsed = now - startedAt;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeInOutCubic(progress);
+    window.scrollTo({ top: startY + distance * eased, behavior: "auto" });
+
+    if (progress < 1) {
+      frameId = window.requestAnimationFrame(tick);
+    }
+  };
+
+  frameId = window.requestAnimationFrame(tick);
+
+  window.setTimeout(() => {
+    if (frameId) {
+      window.cancelAnimationFrame(frameId);
+    }
+  }, duration + 120);
+}
+
 function formatPrice(price: number, currency: string): string {
   const locale = currency.toUpperCase() === "NGN" ? "en-NG" : "en-US";
   return new Intl.NumberFormat(locale, {
@@ -211,15 +254,42 @@ function buildPendingSteps(
   progressItems: NovaPilotResponse["execution_log"] = [],
 ) {
   if (progressItems.length > 0) {
-    return progressItems.map((item, index) => ({
-      id: `${item.step_id}-${item.status}-${item.timestamp}-${index}`,
-      label: item.label,
-      state:
+    const merged = new Map<
+      string,
+      {
+        id: string;
+        label: string;
+        state: "complete" | "failed" | "active";
+        lastTimestamp: string;
+      }
+    >();
+
+    for (const item of progressItems) {
+      const state =
         item.status === "completed"
           ? ("complete" as const)
           : item.status === "failed"
             ? ("failed" as const)
-            : ("active" as const),
+            : ("active" as const);
+      const current = merged.get(item.step_id);
+      if (!current) {
+        merged.set(item.step_id, {
+          id: item.step_id,
+          label: item.label,
+          state,
+          lastTimestamp: item.timestamp,
+        });
+        continue;
+      }
+      current.label = item.label;
+      current.state = state;
+      current.lastTimestamp = item.timestamp;
+    }
+
+    return Array.from(merged.values()).map(({ id, label, state }) => ({
+      id,
+      label,
+      state,
     }));
   }
 
@@ -250,6 +320,41 @@ function buildPendingSteps(
   });
 }
 
+function buildCurrentStatus(
+  fallbackStatus: string,
+  nextStep: string,
+  progressItems: NovaPilotResponse["execution_log"] = [],
+) {
+  if (progressItems.length === 0) {
+    return {
+      title: fallbackStatus,
+      body: nextStep,
+    };
+  }
+
+  const latest = [...progressItems].sort((a, b) => a.timestamp.localeCompare(b.timestamp)).at(-1);
+  if (!latest) {
+    return {
+      title: fallbackStatus,
+      body: nextStep,
+    };
+  }
+
+  const body =
+    typeof latest.details?.error === "string" && latest.details.error
+      ? latest.details.error
+      : latest.status === "completed"
+        ? "Completed."
+        : latest.status === "failed"
+          ? "Failed."
+          : "Working on this step now.";
+
+  return {
+    title: latest.label,
+    body,
+  };
+}
+
 function WaitingState({
   query,
   sites,
@@ -266,6 +371,7 @@ function WaitingState({
   progressItems?: NovaPilotResponse["execution_log"];
 }) {
   const steps = buildPendingSteps(sites, finalPreview.length > 0, progressItems);
+  const currentStatus = buildCurrentStatus(status, nextStep, progressItems);
 
   return (
     <section className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)]">
@@ -358,8 +464,8 @@ function WaitingState({
 
           <div className="mt-5 rounded-2xl border border-zinc-200 bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Current status</p>
-            <p className="mt-1 text-sm font-medium capitalize text-zinc-900">{status}</p>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-500">{nextStep}</p>
+            <p className="mt-1 text-sm font-medium text-zinc-900">{currentStatus.title}</p>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-500">{currentStatus.body}</p>
           </div>
         </div>
       </div>
@@ -375,6 +481,10 @@ export function ResultsDashboard({
   isLoading = false,
 }: ResultsDashboardProps) {
   const [failedGuidanceImages, setFailedGuidanceImages] = useState<Record<string, boolean>>({});
+  const waitingRef = useRef<HTMLElement | null>(null);
+  const recommendationRef = useRef<HTMLElement | null>(null);
+  const lastResearchScrollJobRef = useRef<string | null>(null);
+  const lastAutoScrollKeyRef = useRef<string | null>(null);
 
   const report = result?.final_report ?? null;
   const bestPick = report?.best_pick ?? null;
@@ -418,6 +528,43 @@ export function ResultsDashboard({
     }
     return preview;
   }, [report]);
+
+  useEffect(() => {
+    if (!showWaitingState || !result?.job_id) {
+      lastResearchScrollJobRef.current = null;
+      return;
+    }
+
+    if (lastResearchScrollJobRef.current === result.job_id) {
+      return;
+    }
+    lastResearchScrollJobRef.current = result.job_id;
+
+    const timeoutId = window.setTimeout(() => {
+      animateViewportTo(waitingRef.current, 28, 1150);
+    }, 900);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [result?.job_id, showWaitingState]);
+
+  useEffect(() => {
+    if (!reportHasProducts) {
+      lastAutoScrollKeyRef.current = null;
+      return;
+    }
+
+    const scrollKey = `${query}-${bestPick?.name ?? "comparison"}-${comparison.length}`;
+    if (lastAutoScrollKeyRef.current === scrollKey) {
+      return;
+    }
+    lastAutoScrollKeyRef.current = scrollKey;
+
+    const timeoutId = window.setTimeout(() => {
+      animateViewportTo(recommendationRef.current, 28, 1050);
+    }, 550);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [bestPick?.name, comparison.length, query, reportHasProducts]);
 
   return (
     <div className="mx-auto w-full max-w-5xl pb-20">
@@ -642,14 +789,22 @@ export function ResultsDashboard({
           </section>
 
           {showWaitingState && (
-            <WaitingState
-              query={query}
-              sites={result.instant_guidance.selected_sites}
-              status={result.current_step || result.status}
-              nextStep={result.instant_guidance.next_step}
-              finalPreview={livePreview}
-              progressItems={result.execution_log}
-            />
+            <section ref={waitingRef} className="relative">
+              <div className="pointer-events-none absolute left-1/2 top-0 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
+                <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-4 py-2 text-xs font-medium text-zinc-600 shadow-lg shadow-zinc-950/5 backdrop-blur">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-900" />
+                  Live research continuing below
+                </div>
+              </div>
+              <WaitingState
+                query={query}
+                sites={result.instant_guidance.selected_sites}
+                status={result.current_step || result.status}
+                nextStep={result.instant_guidance.next_step}
+                finalPreview={livePreview}
+                progressItems={result.execution_log}
+              />
+            </section>
           )}
 
           {result?.status === "failed" && !report && (
@@ -672,7 +827,7 @@ export function ResultsDashboard({
           )}
 
           {bestPick && (
-            <section>
+            <section ref={recommendationRef}>
               <RecommendationCard
                 recommendation={{
                   name: bestPick.name,

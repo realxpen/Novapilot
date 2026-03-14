@@ -36,6 +36,17 @@ returns recommendations.
 - Frontend uses `.env.local`.
 - Backend loads `backend/.env` first, then repo `.env`.
 
+## AWS Deployment
+
+- Frontend deployment config is in `amplify.yml`
+- Backend container config is in `backend/Dockerfile`
+- AWS deployment notes and an ECS task definition template are in `deploy/aws/`
+
+Production deployment is designed for:
+
+- AWS Amplify Hosting for the Next.js frontend
+- Amazon ECS Fargate + ALB for the FastAPI backend
+
 ## Default Site Policy
 
 - If the query names sites, NovaPilot uses those sites only.

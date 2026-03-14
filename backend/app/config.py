@@ -45,17 +45,28 @@ class Settings(BaseSettings):
         default="us-east-1",
         validation_alias=AliasChoices("AWS_REGION", "aws_region"),
     )
+    usd_to_ngn_rate: float = Field(
+        default=1600.0,
+        validation_alias=AliasChoices("USD_TO_NGN_RATE", "usd_to_ngn_rate"),
+    )
     default_supported_sites: List[str] = Field(
         default_factory=lambda: ["jumia", "amazon"]
     )
     default_currency: str = "NGN"
     log_level: str = "INFO"
+    cors_allow_origins: List[str] = Field(
+        default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"],
+        validation_alias=AliasChoices("CORS_ALLOW_ORIGINS", "cors_allow_origins"),
+    )
+    cors_allow_origin_regex: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("CORS_ALLOW_ORIGIN_REGEX", "cors_allow_origin_regex"),
+    )
     use_bedrock_interpretation: bool = False
     use_bedrock_report_generation: bool = False
     use_bedrock_site_selection: bool = True
     use_nova_act_automation: bool = True
     nova_act_strict_mode: bool = True
-    fallback_to_mock_on_live_failure: bool = False
     bedrock_interpret_model_id: str = "amazon.nova-lite-v1:0"
     bedrock_report_model_id: str = "amazon.nova-lite-v1:0"
     bedrock_site_selection_model_id: str = "amazon.nova-lite-v1:0"
@@ -69,6 +80,14 @@ class Settings(BaseSettings):
         """Allow comma-separated env var values for supported sites."""
         if isinstance(value, str):
             return [site.strip().lower() for site in value.split(",") if site.strip()]
+        return value
+
+    @field_validator("cors_allow_origins", mode="before")
+    @classmethod
+    def parse_cors_allow_origins(cls, value: object) -> object:
+        """Allow comma-separated env var values for CORS origins."""
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
 

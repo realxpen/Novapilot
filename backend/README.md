@@ -32,6 +32,15 @@ You can also place the same variables in a repo-level `.env`. The backend loads 
 uvicorn backend.app.main:app --reload
 ```
 
+## Production Deployment
+
+For AWS deployment:
+
+- frontend build config: `amplify.yml`
+- backend image: `backend/Dockerfile`
+- ECS task definition template: `deploy/aws/ecs-task-definition.template.json`
+- deployment notes: `deploy/aws/README.md`
+
 ## API Endpoints
 
 - `GET /api/health`
@@ -61,7 +70,6 @@ NOVAPILOT_BEDROCK_SITE_SELECTION_MODEL_ID=amazon.nova-lite-v1:0
 
 # Nova Act
 NOVAPILOT_USE_NOVA_ACT_AUTOMATION=true
-NOVAPILOT_FALLBACK_TO_MOCK_ON_LIVE_FAILURE=false
 NOVA_ACT_API_KEY=your_real_key_here
 NOVAPILOT_NOVA_ACT_MODEL_ID=amazon.nova-act-v1:0
 NOVAPILOT_NOVA_ACT_LOG_GROUP_NAME=
@@ -79,7 +87,6 @@ Recommended local development setup:
 1. Put `NOVA_ACT_API_KEY=...` in `backend/.env`
 2. Restart the backend
 3. Let the backend inject the key into the Nova Act subprocess
-4. Optionally enable `NOVAPILOT_FALLBACK_TO_MOCK_ON_LIVE_FAILURE=true` if you want mock data when live Nova Act fails locally
 
 ## Site Selection Policy
 

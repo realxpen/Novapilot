@@ -20,6 +20,7 @@ from app.services.planner import PlanningService
 from app.services.ranking import RankingService
 from app.services.report import ReportService
 from app.services.site_recommendation import SiteRecommendationService
+from app.utils.currency import convert_amount
 from app.utils.logger import get_logger
 
 
@@ -50,7 +51,6 @@ class NovaPilotOrchestrator:
         self.automation = AutomationService(
             use_nova_act=settings.use_nova_act_automation,
             strict_live_mode=settings.nova_act_strict_mode,
-            fallback_to_mock_on_live_failure=settings.fallback_to_mock_on_live_failure,
         )
         self.extractor = ExtractionService()
         self.ranking = RankingService()
@@ -183,7 +183,6 @@ class NovaPilotOrchestrator:
                     details={
                         "raw_products_collected": len(raw),
                         "source": automation_result.source,
-                        "used_mock_fallback": automation_result.source == "mock",
                     },
                     progress_callback=progress_callback,
                 )
@@ -225,7 +224,7 @@ class NovaPilotOrchestrator:
                 filtered = self._filter_products(
                     normalized,
                     interpreted,
-                    allow_invalid_urls=automation_result.source == "mock",
+                    allow_invalid_urls=False,
                 )
                 self._debug_event(
                     f"products_after_filter_{site}",
@@ -582,7 +581,8 @@ class NovaPilotOrchestrator:
             if product.price <= 0:
                 self._log_product_drop(product, "non_positive_price", "strict", interpreted)
                 continue
-            if interpreted.budget_max and product.price > interpreted.budget_max:
+            comparable_price = self._price_in_budget_currency(product, interpreted)
+            if interpreted.budget_max and comparable_price > interpreted.budget_max:
                 self._log_product_drop(product, "over_budget", "strict", interpreted)
                 continue
             strict_matches.append(product)
@@ -618,7 +618,8 @@ class NovaPilotOrchestrator:
             if product.price <= 0:
                 self._log_product_drop(product, "non_positive_price", "relaxed", interpreted)
                 continue
-            if interpreted.budget_max and product.price > interpreted.budget_max:
+            comparable_price = self._price_in_budget_currency(product, interpreted)
+            if interpreted.budget_max and comparable_price > interpreted.budget_max:
                 self._log_product_drop(product, "over_budget", "relaxed", interpreted)
                 continue
             relaxed_matches.append(product)
@@ -868,6 +869,21 @@ class NovaPilotOrchestrator:
                 "product": product,
             },
         )
+
+    def _price_in_budget_currency(
+        self,
+        product: Any,
+        interpreted: InterpretedRequest,
+    ) -> float:
+        converted = convert_amount(
+            getattr(product, "price", None),
+            getattr(product, "currency", None),
+            interpreted.budget_currency,
+            settings.usd_to_ngn_rate,
+        )
+        if converted is not None:
+            return converted
+        return float(getattr(product, "price", 0.0) or 0.0)
 
     def _debug_event(self, label: str, payload: Any) -> None:
         logger.info(

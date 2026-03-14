@@ -1,0 +1,71 @@
+{
+  "family": "novapilot-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::<account-id>:role/novapilot-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::<account-id>:role/novapilot-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "novapilot-backend",
+      "image": "<account-id>.dkr.ecr.<region>.amazonaws.com/novapilot-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "NOVAPILOT_LOG_LEVEL",
+          "value": "INFO"
+        },
+        {
+          "name": "NOVAPILOT_CORS_ALLOW_ORIGINS",
+          "value": "https://main.<amplify-app-id>.amplifyapp.com,https://app.example.com"
+        },
+        {
+          "name": "NOVAPILOT_USE_NOVA_ACT_AUTOMATION",
+          "value": "true"
+        },
+        {
+          "name": "NOVAPILOT_NOVA_ACT_STRICT_MODE",
+          "value": "true"
+        },
+        {
+          "name": "NOVAPILOT_NOVA_ACT_TIMEOUT_SECONDS",
+          "value": "120"
+        },
+        {
+          "name": "NOVAPILOT_NOVA_ACT_POLL_INTERVAL_SECONDS",
+          "value": "2"
+        },
+        {
+          "name": "NOVAPILOT_JOBS_STORAGE_PATH",
+          "value": "/tmp/novapilot-jobs.json"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "NOVA_ACT_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:<region>:<account-id>:secret:novapilot/nova-act-api-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/novapilot-backend",
+          "awslogs-region": "<region>",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

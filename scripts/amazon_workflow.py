@@ -73,6 +73,7 @@ def build_prompt(
     category: str,
     search_terms: list[str],
     budget_max: float | None,
+    budget_currency: str | None,
     max_results: int,
 ) -> str:
     trimmed_terms = [term for term in search_terms if term.strip()][:4]
@@ -95,31 +96,34 @@ def build_prompt(
 
     budget_guard = ""
     if budget_max is not None:
+        currency_label = (budget_currency or "USD").upper()
+        formatted_budget = f"{budget_max:.2f}" if currency_label == "USD" else f"{budget_max:.0f}"
         budget_guard = (
-            f" Only keep products priced at or below the budget cap of {budget_max:.0f}. "
+            f" Only keep products priced at or below the budget cap of {currency_label} {formatted_budget}. "
             "Do not include over-budget products."
         )
 
     return (
         "You are already on Amazon search results for the first concrete product term.\n"
-        f"Set delivery location/country to '{country}' before opening product pages if possible.\n"
+        f"Set delivery location/country to '{country}' if possible.\n"
         "Prefer listings and product pages that display local pricing in NGN when available.\n"
         "If NGN is not available, keep the original displayed currency code exactly as shown.\n"
         f"Use these search terms in order only when needed: {ordered_terms}.\n"
-        "Stay only on Amazon search results and Amazon product detail pages.\n"
+        "Stay on Amazon search results pages.\n"
         "Do not inspect sponsored rows, carousels, ads, or unrelated widgets.\n"
         f"Ignore and skip {excluded}.\n"
-        f"Collect up to {max_results} real {product_type} product detail pages only.\n"
-        "Inspect only the first visible strong matching cards.\n"
-        "Open the first clearly relevant product page immediately.\n"
+        f"Collect up to {max_results} real {product_type} listings from visible search result cards only.\n"
+        "Inspect up to the first 8 visible strong matching cards.\n"
+        "Compare those visible cards and return the best matches, not just the first ones you see.\n"
+        "Do not open product detail pages.\n"
         "If the current results are irrelevant, use the next search term in the Amazon search box.\n"
         "Use the raw user sentence only as a last fallback.\n"
         "Stop as soon as you have enough valid products."
         f"{budget_guard}\n"
+        "Prefer extracting directly from the visible search cards.\n"
         "Return only product detail page URLs, never search or category URLs.\n"
         "Ensure 'product_url' is an absolute https URL on amazon.*.\n"
-        "Ensure 'image_url' is an absolute https image URL for that exact product.\n"
-        "For each product, keep a short details summary from the page.\n"
+        "Use 'image_url', 'rating', and 'details' from the search results when visible; otherwise return null.\n"
         "Return only the structured response requested by the schema."
     )
 
@@ -134,7 +138,8 @@ def run_amazon_workflow(
     country: str = "Nigeria",
     category: str = "electronics",
     budget_max: float | None = None,
-    max_results: int = 2,
+    budget_currency: str | None = "USD",
+    max_results: int = 3,
     search_terms: list[str] | None = None,
 ) -> Any:
     if not NOVA_ACT_KEY:
@@ -152,12 +157,13 @@ def run_amazon_workflow(
             category,
             cleaned_terms or [query],
             budget_max,
+            budget_currency,
             max_results,
         )
         result = nova.act_get(
             prompt,
             schema=build_schema(max_results),
-            max_steps=20,
+            max_steps=6,
         )
         payload = result.parsed_response
         if not isinstance(payload, dict):
@@ -194,9 +200,14 @@ def main() -> None:
         help="Optional maximum budget",
     )
     parser.add_argument(
+        "--budget-currency",
+        default="USD",
+        help="Currency code for the budget max passed to the Amazon workflow",
+    )
+    parser.add_argument(
         "--max-results",
         type=int,
-        default=2,
+        default=3,
         help="Maximum number of valid products to collect",
     )
     parser.add_argument(
@@ -219,6 +230,7 @@ def main() -> None:
         args.country,
         args.category,
         args.budget_max,
+        args.budget_currency,
         args.max_results,
         [str(term).strip() for term in search_terms if str(term).strip()][: args.max_search_terms],
     )

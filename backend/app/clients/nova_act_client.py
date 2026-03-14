@@ -69,6 +69,9 @@ class NovaActClient(StoreAutomationClient):
         budget_max = interpreted_request.get("budget_max")
         if budget_max is not None:
             command.extend(["--budget-max", str(budget_max)])
+        budget_currency = str(interpreted_request.get("budget_currency") or "").strip()
+        if budget_currency and site.lower() == "amazon":
+            command.extend(["--budget-currency", budget_currency])
         max_results = interpreted_request.get("max_results")
         if max_results is not None:
             command.extend(["--max-results", str(max_results)])

@@ -72,20 +72,22 @@ class ExtractionService:
         )
 
     def _normalize_amazon(self, item: Dict[str, Any]) -> Product:
+        name = item.get("name", "Unknown Product")
         details = item.get("details", "")
+        text_blob = " ".join(str(part) for part in [name, details] if part)
         product_url = self._normalize_url("amazon", item.get("product_url"))
         image_url = self._normalize_image_url("amazon", item.get("image_url"))
         return Product(
-            name=item.get("name", "Unknown Product"),
+            name=name,
             store="amazon",
             price=parse_price(item.get("amount")),
             currency=normalize_currency(item.get("currency_code")),
             rating=self._parse_rating_value(item.get("rating")),
-            ram_gb=extract_ram_gb(details),
-            storage_gb=extract_storage_gb(details),
-            cpu=self._extract_cpu(details),
-            gpu=self._extract_gpu(details),
-            screen_size=extract_screen_size(details),
+            ram_gb=extract_ram_gb(text_blob),
+            storage_gb=extract_storage_gb(text_blob),
+            cpu=self._extract_cpu(text_blob),
+            gpu=self._extract_gpu(text_blob),
+            screen_size=extract_screen_size(text_blob),
             url=product_url,
             image_url=image_url,
         )

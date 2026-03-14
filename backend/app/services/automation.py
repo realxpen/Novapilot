@@ -7,11 +7,13 @@ from typing import Any, Dict, List
 from app.clients.interfaces import StoreAutomationClient
 from app.clients.nova_act_client import NovaActClient
 from app.schemas.response import InterpretedRequest
-from app.services.mock_catalog import MockCatalogService
+from app.utils.currency import convert_amount, site_budget_currency
 from app.utils.logger import get_logger
+from app.config import get_settings
 
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 @dataclass
@@ -64,16 +66,12 @@ class AutomationService:
     def __init__(
         self,
         nova_act_client: StoreAutomationClient | None = None,
-        mock_catalog: MockCatalogService | None = None,
         use_nova_act: bool = True,
         strict_live_mode: bool = True,
-        fallback_to_mock_on_live_failure: bool = False,
     ) -> None:
         self.nova_act_client = nova_act_client or NovaActClient()
-        self.mock_catalog = mock_catalog or MockCatalogService()
         self.use_nova_act = use_nova_act
         self.strict_live_mode = strict_live_mode
-        self.fallback_to_mock_on_live_failure = fallback_to_mock_on_live_failure
 
     def run_site_workflow(
         self,
@@ -84,20 +82,7 @@ class AutomationService:
     ) -> StoreWorkflowResult:
         """Execute a live workflow for one store and return raw product dictionaries."""
         if not self.use_nova_act:
-            mock_results = self.mock_catalog.build_store_products(site, interpreted, query)
-            warning = "Live Nova Act automation is disabled; using mock product data instead."
-            logger.warning(
-                "NOVAPILOT_DEBUG automation_mock_only site=%s warning=%s result_count=%s",
-                site,
-                warning,
-                len(mock_results),
-            )
-            return StoreWorkflowResult(
-                site=site,
-                raw_products=mock_results,
-                source="mock",
-                warning_message=warning,
-            )
+            raise RuntimeError("Live Nova Act automation is disabled for this backend.")
 
         payload: Dict[str, Any] = interpreted.model_dump()
         payload["query"] = query
@@ -116,16 +101,38 @@ class AutomationService:
             else:
                 payload["max_results"] = 2
                 payload["max_search_terms"] = 2
+        elif site_key == "amazon":
+            payload["max_results"] = max(3, int(interpreted.top_n or 3))
+            payload["max_search_terms"] = 3
         else:
             payload["max_results"] = 2
             payload["max_search_terms"] = 3
-        payload["budget_max"] = interpreted.budget_max
+        target_budget_currency = site_budget_currency(site)
+        converted_budget_max = convert_amount(
+            interpreted.budget_max,
+            interpreted.budget_currency,
+            target_budget_currency,
+            settings.usd_to_ngn_rate,
+        )
+        payload["budget_currency"] = target_budget_currency
+        payload["budget_max"] = converted_budget_max if converted_budget_max is not None else interpreted.budget_max
+        payload["original_budget_currency"] = interpreted.budget_currency
+        payload["original_budget_max"] = interpreted.budget_max
         logger.info(
             "NOVAPILOT_DEBUG automation_mode site=%s mode=%s strict_live_mode=%s payload=%s",
             site,
-            "live_nova_act" if self.use_nova_act else "mock_disabled",
+            "live_nova_act" if self.use_nova_act else "live_disabled",
             self.strict_live_mode,
             payload,
+        )
+        logger.info(
+            "NOVAPILOT_DEBUG automation_budget_conversion site=%s original_budget_currency=%s original_budget_max=%s target_budget_currency=%s converted_budget_max=%s usd_to_ngn_rate=%s",
+            site,
+            interpreted.budget_currency,
+            interpreted.budget_max,
+            target_budget_currency,
+            converted_budget_max,
+            settings.usd_to_ngn_rate,
         )
 
         try:
@@ -146,23 +153,6 @@ class AutomationService:
             )
         except Exception as exc:  # noqa: BLE001 - live errors must surface directly now
             logger.exception("NOVAPILOT_DEBUG automation_failed site=%s", site)
-            if self.fallback_to_mock_on_live_failure:
-                mock_results = self.mock_catalog.build_store_products(site, interpreted, query)
-                warning = "Live Nova Act connection failed locally; using mock product data instead."
-                logger.warning(
-                    "NOVAPILOT_DEBUG automation_mock_fallback site=%s warning=%s live_error=%s result_count=%s",
-                    site,
-                    warning,
-                    str(exc),
-                    len(mock_results),
-                )
-                return StoreWorkflowResult(
-                    site=site,
-                    raw_products=mock_results,
-                    source="mock",
-                    warning_message=warning,
-                    live_error_message=str(exc),
-                )
             raise RuntimeError(f"Nova Act live workflow failed for {site}: {exc}") from exc
 
     def _build_search_terms(

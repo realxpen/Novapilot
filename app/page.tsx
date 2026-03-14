@@ -19,6 +19,22 @@ export default function Page() {
     process.env.NEXT_PUBLIC_DEFAULT_USER_LOCATION?.trim() || "Nigeria";
   const requestTimeoutMs = 240000;
 
+  const readApiError = async (response: Response): Promise<string> => {
+    const fallback = `API request failed with status ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: unknown; message?: unknown };
+      if (typeof payload.detail === "string" && payload.detail.trim()) {
+        return payload.detail;
+      }
+      if (typeof payload.message === "string" && payload.message.trim()) {
+        return payload.message;
+      }
+      return fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setError(null);
@@ -48,7 +64,7 @@ export default function Page() {
         window.clearTimeout(timeoutId);
 
         if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+          throw new Error(await readApiError(response));
         }
 
         const payload = (await response.json()) as NovaPilotJobResponse;

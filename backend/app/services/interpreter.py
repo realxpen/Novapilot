@@ -51,13 +51,26 @@ class InterpreterService:
         payload = self.interpretation_client.interpret_query(query=query, top_n=top_n)
         if not payload:
             return None
+        raw_budget_currency = payload.get("budget_currency")
+        budget_currency = str(raw_budget_currency).strip().upper() if raw_budget_currency else "NGN"
+        raw_category = payload.get("category")
+        category = str(raw_category).strip().lower() if raw_category else self._detect_category(query)
+        raw_use_case = payload.get("use_case")
+        use_case = str(raw_use_case).strip().lower() if raw_use_case else self._detect_use_case(query)
+        raw_priority_specs = payload.get("priority_specs")
+        priority_specs = raw_priority_specs if isinstance(raw_priority_specs, list) else []
+        raw_top_n = payload.get("top_n")
+        try:
+            resolved_top_n = int(raw_top_n) if raw_top_n is not None else top_n
+        except (TypeError, ValueError):
+            resolved_top_n = top_n
         return InterpretedRequest(
-            category=payload.get("category", self._detect_category(query)),
-            budget_currency=payload.get("budget_currency", "NGN"),
+            category=category,
+            budget_currency=budget_currency,
             budget_max=payload.get("budget_max"),
-            use_case=payload.get("use_case", self._detect_use_case(query)),
-            priority_specs=payload.get("priority_specs", []),
-            top_n=int(payload.get("top_n", top_n)),
+            use_case=use_case,
+            priority_specs=priority_specs,
+            top_n=resolved_top_n,
         )
 
     def _detect_category(self, query: str) -> str:
@@ -112,6 +125,8 @@ class InterpreterService:
 
     def _apply_query_overrides(self, interpreted: InterpretedRequest, query: str) -> InterpretedRequest:
         lowered = query.lower()
+        if not interpreted.budget_currency:
+            interpreted.budget_currency = "NGN"
         if "powerbank" in lowered or "power bank" in lowered:
             interpreted.category = "electronics"
             interpreted.priority_specs = ["capacity", "charging speed", "ports", "price", "rating"]

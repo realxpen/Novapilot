@@ -3,9 +3,11 @@
 import re
 from typing import Dict, List
 
+from app.config import get_settings
 from app.schemas.product import Product
 from app.schemas.response import InterpretedRequest
 from app.services.ranking_weights import USE_CASE_WEIGHTS
+from app.utils.currency import convert_amount
 from app.utils.logger import get_logger
 from app.utils.scoring import (
     budget_score,
@@ -19,6 +21,7 @@ from app.utils.scoring import (
 
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 class RankingService:
@@ -61,14 +64,15 @@ class RankingService:
         return ranked
 
     def _score_product(self, product: Product, interpreted: InterpretedRequest) -> Dict[str, float]:
-        budget = budget_score(product.price, interpreted.budget_max)
+        comparable_price = self._price_in_budget_currency(product, interpreted)
+        budget = budget_score(comparable_price, interpreted.budget_max)
         ram = ram_score(product.ram_gb)
         storage = storage_score(product.storage_gb)
         cpu = cpu_score(product.cpu)
         gpu = gpu_score(product.gpu)
         rating = rating_score(product.rating)
         quality = (ram + storage + cpu + gpu + rating) / 5.0
-        value = value_score(product.price, quality)
+        value = value_score(comparable_price, quality)
 
         return {
             "budget": budget,
@@ -88,7 +92,8 @@ class RankingService:
 
     def _build_short_reason(self, product: Product, interpreted: InterpretedRequest) -> str:
         reason_parts = []
-        if interpreted.budget_max and product.price <= interpreted.budget_max:
+        comparable_price = self._price_in_budget_currency(product, interpreted)
+        if interpreted.budget_max and comparable_price <= interpreted.budget_max:
             reason_parts.append("within budget")
         if product.ram_gb:
             reason_parts.append(f"{product.ram_gb}GB RAM")
@@ -165,3 +170,12 @@ class RankingService:
         if candidate_rating != current_rating:
             return candidate_rating > current_rating
         return candidate.price < current.price
+
+    def _price_in_budget_currency(self, product: Product, interpreted: InterpretedRequest) -> float:
+        converted = convert_amount(
+            product.price,
+            product.currency,
+            interpreted.budget_currency,
+            settings.usd_to_ngn_rate,
+        )
+        return converted if converted is not None else product.price

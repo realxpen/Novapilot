@@ -37,6 +37,56 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
 
+GENERIC_SEARCH_STOPWORDS = {
+    "best",
+    "top",
+    "good",
+    "great",
+    "budget",
+    "under",
+    "below",
+    "less",
+    "than",
+    "around",
+    "about",
+    "for",
+    "with",
+    "without",
+    "find",
+    "need",
+    "want",
+    "looking",
+    "buy",
+    "phone",
+    "smartphone",
+    "laptop",
+    "tablet",
+    "headphone",
+    "earbuds",
+    "earphones",
+}
+
+DEDUPLICATION_STOPWORDS = {
+    "black",
+    "blue",
+    "navy",
+    "white",
+    "gray",
+    "grey",
+    "gold",
+    "silver",
+    "green",
+    "red",
+    "purple",
+    "awesome",
+    "midnight",
+    "sunset",
+    "ice",
+    "iceblue",
+    "lemon",
+    "lilac",
+}
+
 
 def _timing_log(event: str, **fields: Any) -> None:
     payload = {"event": event, **fields}
@@ -53,6 +103,23 @@ def _dedupe_terms(terms: list[str]) -> list[str]:
         seen.add(normalized)
         ordered.append(str(term).strip())
     return ordered
+
+
+def _significant_tokens(*values: str | None) -> list[str]:
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if not value:
+            continue
+        cleaned = re.sub(r"[^a-z0-9\s]", " ", value.lower())
+        for token in cleaned.split():
+            if len(token) <= 2 or token in GENERIC_SEARCH_STOPWORDS:
+                continue
+            if token in seen:
+                continue
+            seen.add(token)
+            tokens.append(token)
+    return tokens
 
 
 def normalize_search_terms(category: str, query: str, terms: list[str]) -> list[str]:
@@ -166,6 +233,120 @@ def _title_from_jumia_url(url: str | None) -> str | None:
     slug = slug.replace("-", " ")
     cleaned = _clean_text(slug)
     return cleaned
+
+
+def _candidate_group_key(item: dict[str, Any]) -> str:
+    title = str(item.get("title") or _title_from_jumia_url(item.get("url")) or "").lower()
+    cleaned = re.sub(r"[^a-z0-9\s]", " ", title)
+    tokens = [token for token in cleaned.split() if token not in DEDUPLICATION_STOPWORDS]
+    base = " ".join(tokens[:12]).strip()
+    if base:
+        return base
+    return str(item.get("url") or "").strip().lower()
+
+
+def _candidate_score(
+    item: dict[str, Any],
+    *,
+    query: str,
+    term: str,
+    category: str,
+    budget_max: float | None,
+) -> float:
+    title = str(item.get("title") or "")
+    specs = str(item.get("specs") or "")
+    text = f"{title} {specs}".lower()
+    price = _parse_price_value(item.get("price_text"))
+    score = 0.0
+
+    title_tokens = _significant_tokens(title)
+    query_tokens = _significant_tokens(term, query)
+    match_count = sum(1 for token in query_tokens if token in text)
+    score += min(match_count, 6) * 1.5
+
+    if category.lower() == "smartphone":
+        if re.search(r"\b8\s*gb\b", text, re.IGNORECASE):
+            score += 1.6
+        if re.search(r"\b(128|256|512)\s*gb\b", text, re.IGNORECASE):
+            score += 1.6
+        if "5g" in text:
+            score += 0.8
+    elif category.lower() == "laptop":
+        if "16gb" in text:
+            score += 1.6
+        if "512gb" in text or "512 gb" in text:
+            score += 1.4
+        if any(token in text for token in ["core i7", "core i5", "ryzen 7", "ryzen 5"]):
+            score += 1.2
+
+    if item.get("image"):
+        score += 0.35
+    if item.get("rating_text"):
+        score += 0.35
+    if title_tokens:
+        score += min(len(title_tokens), 4) * 0.1
+
+    if price is not None:
+        score += 0.5
+        if budget_max is not None and budget_max > 0:
+            if price <= budget_max:
+                closeness = 1.0 - abs(budget_max - price) / budget_max
+                score += max(0.0, closeness) * 1.6
+            else:
+                score -= min(3.0, ((price - budget_max) / budget_max) * 8.0)
+
+    return round(score, 3)
+
+
+def _select_best_candidates(
+    candidates: list[dict[str, Any]],
+    *,
+    target_count: int,
+    query: str,
+    category: str,
+    budget_max: float | None,
+) -> list[dict[str, Any]]:
+    ranked = sorted(
+        candidates,
+        key=lambda item: (
+            float(item.get("_candidate_score", 0.0)),
+            1 if item.get("rating_text") else 0,
+            1 if item.get("image") else 0,
+            -(_parse_price_value(item.get("price_text")) or 0.0),
+        ),
+        reverse=True,
+    )
+
+    selected: list[dict[str, Any]] = []
+    used_groups: set[str] = set()
+
+    for candidate in ranked:
+        group_key = _candidate_group_key(candidate)
+        if group_key in used_groups:
+            continue
+        used_groups.add(group_key)
+        selected.append(
+            {
+                key: value
+                for key, value in candidate.items()
+                if not str(key).startswith("_")
+            }
+        )
+        if len(selected) >= target_count:
+            return selected
+
+    for candidate in ranked:
+        cleaned = {
+            key: value
+            for key, value in candidate.items()
+            if not str(key).startswith("_")
+        }
+        if any(str(existing.get("url") or "").strip().lower() == str(cleaned.get("url") or "").strip().lower() for existing in selected):
+            continue
+        selected.append(cleaned)
+        if len(selected) >= target_count:
+            break
+    return selected
 
 
 def _is_relevant_for_category(title: str | None, category: str) -> bool:
@@ -535,7 +716,8 @@ def fallback_extract_from_search(
     phase_start = time.monotonic()
     target_count = max(1, max_results)
     terms = [term for term in search_terms if term.strip()] or [query]
-    collected: list[dict[str, Any]] = []
+    candidate_target = max(target_count * 3, target_count + 2)
+    candidates: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
     errors: list[str] = []
     search_pages_loaded = 0
@@ -555,7 +737,7 @@ def fallback_extract_from_search(
     for term in terms[:max_terms]:
         if deadline_ts is not None and time.monotonic() >= deadline_ts:
             break
-        if len(collected) >= target_count:
+        if len(candidates) >= candidate_target:
             break
         search_url = f"{JUMIA_BASE}/catalog/?q={quote_plus(term)}"
         term_start = time.monotonic()
@@ -604,8 +786,6 @@ def fallback_extract_from_search(
             if deadline_ts is not None and time.monotonic() >= deadline_ts:
                 break
             if inspected_candidates >= max_cards_per_term:
-                break
-            if len(collected) >= target_count:
                 break
             normalized_card = _normalize_product(card)
             normalize_start = time.monotonic()
@@ -691,7 +871,15 @@ def fallback_extract_from_search(
                 continue
 
             seen_urls.add(url)
-            collected.append(merged)
+            merged["_candidate_score"] = _candidate_score(
+                merged,
+                query=query,
+                term=term,
+                category=category,
+                budget_max=budget_max,
+            )
+            merged["_candidate_term"] = term
+            candidates.append(merged)
             _timing_log(
                 "product_normalization",
                 phase=phase,
@@ -702,9 +890,10 @@ def fallback_extract_from_search(
                 title=merged.get("title"),
                 url=url,
                 parsed_price=merged_price,
-                collected_count=len(collected),
+                candidate_score=merged["_candidate_score"],
+                candidate_count=len(candidates),
             )
-            if len(collected) >= target_count:
+            if len(candidates) >= candidate_target:
                 break
         _timing_log(
             "search_term_end",
@@ -712,8 +901,23 @@ def fallback_extract_from_search(
             term=term,
             duration_ms=round((time.monotonic() - term_start) * 1000, 1),
             inspected_candidates=inspected_candidates,
-            collected_count=len(collected),
+            candidate_count=len(candidates),
         )
+
+    collected = _select_best_candidates(
+        candidates,
+        target_count=target_count,
+        query=query,
+        category=category,
+        budget_max=budget_max,
+    )
+    _timing_log(
+        "candidate_selection",
+        phase=phase,
+        candidate_count=len(candidates),
+        selected_count=len(collected),
+        selected_titles=[item.get("title") for item in collected],
+    )
 
     result = {
         "products": collected,
@@ -915,7 +1119,7 @@ def run_jumia_workflow(
         search_terms=cleaned_terms[:3],
         deadline_ts=hard_deadline,
         max_terms=3,
-        max_cards_per_term=4,
+        max_cards_per_term=8,
         max_snapshot_fetches=0,
         search_timeout=4,
         snapshot_timeout=3,
@@ -945,7 +1149,7 @@ def run_jumia_workflow(
             search_terms=broad_terms,
             deadline_ts=hard_deadline,
             max_terms=1,
-            max_cards_per_term=4,
+            max_cards_per_term=6,
             max_snapshot_fetches=0,
             search_timeout=4,
             snapshot_timeout=3,

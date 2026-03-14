@@ -20,7 +20,8 @@ def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name, version=settings.app_version)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origins=settings.cors_allow_origins,
+        allow_origin_regex=settings.cors_allow_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -30,12 +31,11 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def startup_log() -> None:
         logger.info(
-            "Starting %s v%s | live_nova_act_enabled=%s | strict_live_mode=%s | fallback_to_mock_on_live_failure=%s | nova_api_key_present=%s | masked_nova_api_key=%s | backend_env=%s | repo_env=%s | os_environ_has_nova_act_api_key=%s | os_environ_has_nova_api_key=%s | settings_cached=%s",
+            "Starting %s v%s | live_nova_act_enabled=%s | strict_live_mode=%s | nova_api_key_present=%s | masked_nova_api_key=%s | backend_env=%s | repo_env=%s | os_environ_has_nova_act_api_key=%s | os_environ_has_nova_api_key=%s | settings_cached=%s",
             settings.app_name,
             settings.app_version,
             settings.use_nova_act_automation,
             settings.nova_act_strict_mode,
-            settings.fallback_to_mock_on_live_failure,
             bool(settings.nova_api_key),
             mask_secret(settings.nova_api_key),
             str(BACKEND_ROOT / ".env"),
@@ -45,12 +45,14 @@ def create_app() -> FastAPI:
             True,
         )
         logger.info(
-            "NOVAPILOT_STARTUP_FLAGS live_nova_act_enabled=%s fallback_to_mock_on_live_failure=%s nova_act_timeout_seconds=%s nova_api_key_present=%s masked_nova_api_key=%s",
+            "NOVAPILOT_STARTUP_FLAGS live_nova_act_enabled=%s nova_act_timeout_seconds=%s nova_api_key_present=%s masked_nova_api_key=%s cors_allow_origins=%s cors_allow_origin_regex=%s usd_to_ngn_rate=%s",
             settings.use_nova_act_automation,
-            settings.fallback_to_mock_on_live_failure,
             settings.nova_act_timeout_seconds,
             bool(settings.nova_api_key),
             mask_secret(settings.nova_api_key),
+            settings.cors_allow_origins,
+            settings.cors_allow_origin_regex,
+            settings.usd_to_ngn_rate,
         )
         if settings.use_nova_act_automation and not settings.nova_api_key:
             logger.warning(
