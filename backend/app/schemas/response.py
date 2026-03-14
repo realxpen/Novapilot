@@ -46,3 +46,44 @@ class NovaPilotResponse(BaseModel):
     comparison_table: List[Product]
     reasoning: str
     warnings: Optional[List[str]] = None
+
+
+class InstantGuidance(BaseModel):
+    """Fast advisory response shown before the live market report completes."""
+
+    headline: str
+    summary: str
+    key_specs: List[str] = Field(default_factory=list)
+    target_models: List[str] = Field(default_factory=list)
+    featured_recommendations: List[str] = Field(default_factory=list)
+    market_insights: List[str] = Field(default_factory=list)
+    budget_bands: List[str] = Field(default_factory=list)
+    budget_note: str
+    selected_sites: List[str] = Field(default_factory=list)
+    next_step: str
+
+
+class JobSubmissionResponse(BaseModel):
+    """Response returned immediately after a report job is queued."""
+
+    job_id: str
+    status: str
+    query: str
+    interpreted_request: InterpretedRequest
+    instant_guidance: InstantGuidance
+    current_step: Optional[str] = None
+    execution_log: List[ExecutionLogItem] = Field(default_factory=list)
+
+
+class JobStatusResponse(BaseModel):
+    """Polling response for a running or completed report job."""
+
+    job_id: str
+    status: str
+    query: str
+    interpreted_request: InterpretedRequest
+    instant_guidance: InstantGuidance
+    current_step: Optional[str] = None
+    execution_log: List[ExecutionLogItem] = Field(default_factory=list)
+    final_report: Optional[NovaPilotResponse] = None
+    error: Optional[str] = None

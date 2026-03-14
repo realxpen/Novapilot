@@ -1,0 +1,227 @@
+{
+  "status": "success",
+  "query": "Best phones under ₦500k",
+  "interpreted_request": {
+    "category": "smartphone",
+    "budget_currency": "NGN",
+    "budget_max": 500000.0,
+    "use_case": "general",
+    "priority_specs": [
+      "price",
+      "rating",
+      "RAM"
+    ],
+    "top_n": 3
+  },
+  "execution_log": [
+    {
+      "step_id": "request_validation",
+      "label": "Validate request payload",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:06.310793+00:00",
+      "details": {
+        "query_length": 23,
+        "site_count": 1
+      }
+    },
+    {
+      "step_id": "interpretation",
+      "label": "Interpret shopping query",
+      "status": "started",
+      "timestamp": "2026-03-13T12:41:06.310860+00:00",
+      "details": null
+    },
+    {
+      "step_id": "interpretation",
+      "label": "Interpret shopping query",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:06.312089+00:00",
+      "details": {
+        "category": "smartphone",
+        "use_case": "general",
+        "budget_max": 500000.0
+      }
+    },
+    {
+      "step_id": "site_selection",
+      "label": "Select target stores",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:06.312389+00:00",
+      "details": {
+        "selected_sites": [
+          "jumia"
+        ],
+        "source": "fallback",
+        "allowed_sites": [
+          "jumia"
+        ],
+        "confidence": 0.55,
+        "rationale": "Nigeria fallback prioritized local marketplaces first and included Amazon only when category or budget suggested it."
+      }
+    },
+    {
+      "step_id": "planning",
+      "label": "Build execution plan",
+      "status": "started",
+      "timestamp": "2026-03-13T12:41:06.312415+00:00",
+      "details": null
+    },
+    {
+      "step_id": "planning",
+      "label": "Build execution plan",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:06.312630+00:00",
+      "details": {
+        "steps_count": 5,
+        "steps": [
+          "search_jumia",
+          "collect_jumia_products",
+          "normalize_products",
+          "rank_products",
+          "generate_report"
+        ]
+      }
+    },
+    {
+      "step_id": "automation_jumia",
+      "label": "Run jumia store automation",
+      "status": "started",
+      "timestamp": "2026-03-13T12:41:06.312653+00:00",
+      "details": null
+    },
+    {
+      "step_id": "automation_jumia",
+      "label": "Run jumia store automation",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:15.731239+00:00",
+      "details": {
+        "raw_products_collected": 3,
+        "source": "live",
+        "used_mock_fallback": false
+      }
+    },
+    {
+      "step_id": "normalization_jumia",
+      "label": "Normalize jumia products",
+      "status": "started",
+      "timestamp": "2026-03-13T12:41:15.731305+00:00",
+      "details": null
+    },
+    {
+      "step_id": "normalization_jumia",
+      "label": "Normalize jumia products",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:15.736617+00:00",
+      "details": {
+        "normalized_products": 3
+      }
+    },
+    {
+      "step_id": "filtering_jumia",
+      "label": "Filter jumia products against intent",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:15.737271+00:00",
+      "details": {
+        "before_count": 3,
+        "after_count": 3
+      }
+    },
+    {
+      "step_id": "ranking",
+      "label": "Rank products",
+      "status": "started",
+      "timestamp": "2026-03-13T12:41:15.737303+00:00",
+      "details": {
+        "input_products": 3
+      }
+    },
+    {
+      "step_id": "ranking",
+      "label": "Rank products",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:15.738664+00:00",
+      "details": {
+        "ranked_products": 2
+      }
+    },
+    {
+      "step_id": "report_generation",
+      "label": "Generate recommendation report",
+      "status": "completed",
+      "timestamp": "2026-03-13T12:41:15.738696+00:00",
+      "details": {
+        "top_n": 3
+      }
+    }
+  ],
+  "best_pick": {
+    "name": "Samsung Galaxy A35 5G 6.6\" 8GB 256GB ROM Android 14 - Awesome Navy",
+    "store": "jumia",
+    "price": 465000.0,
+    "currency": "NGN",
+    "rating": 5.0,
+    "ram_gb": 8,
+    "storage_gb": 256,
+    "cpu": null,
+    "gpu": null,
+    "screen_size": "6.6 inch",
+    "url": "https://www.jumia.com.ng/galaxy-a35-5g-6.6-8gb-256gb-rom-android-14-awesome-navy-samsung-mpg7340069.html",
+    "score": 7.016,
+    "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/32/9810883/1.jpg?5506",
+    "short_reason": "within budget, 8GB RAM, 5.0/5 rating"
+  },
+  "alternatives": [
+    {
+      "name": "XIAOMI Redmi Note 13 Pro 5G 6.67\" 8GB 256GB 200MP Camera Dual SIM 5100mAh Battery 1.5K 120Hz AMOLED Display - Blue",
+      "store": "jumia",
+      "price": 407990.0,
+      "currency": "NGN",
+      "rating": null,
+      "ram_gb": 8,
+      "storage_gb": 256,
+      "cpu": null,
+      "gpu": null,
+      "screen_size": "6.67 inch",
+      "url": "https://www.jumia.com.ng/xiaomi-redmi-note-13-pro-5g-6.67-8gb-256gb-200mp-camera-dual-sim-5100mah-battery-1.5k-120hz-amoled-display-blue-419051573.html",
+      "score": 6.192,
+      "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/37/5150914/1.jpg?8627",
+      "short_reason": "within budget, 8GB RAM"
+    }
+  ],
+  "comparison_table": [
+    {
+      "name": "Samsung Galaxy A35 5G 6.6\" 8GB 256GB ROM Android 14 - Awesome Navy",
+      "store": "jumia",
+      "price": 465000.0,
+      "currency": "NGN",
+      "rating": 5.0,
+      "ram_gb": 8,
+      "storage_gb": 256,
+      "cpu": null,
+      "gpu": null,
+      "screen_size": "6.6 inch",
+      "url": "https://www.jumia.com.ng/galaxy-a35-5g-6.6-8gb-256gb-rom-android-14-awesome-navy-samsung-mpg7340069.html",
+      "score": 7.016,
+      "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/32/9810883/1.jpg?5506",
+      "short_reason": "within budget, 8GB RAM, 5.0/5 rating"
+    },
+    {
+      "name": "XIAOMI Redmi Note 13 Pro 5G 6.67\" 8GB 256GB 200MP Camera Dual SIM 5100mAh Battery 1.5K 120Hz AMOLED Display - Blue",
+      "store": "jumia",
+      "price": 407990.0,
+      "currency": "NGN",
+      "rating": null,
+      "ram_gb": 8,
+      "storage_gb": 256,
+      "cpu": null,
+      "gpu": null,
+      "screen_size": "6.67 inch",
+      "url": "https://www.jumia.com.ng/xiaomi-redmi-note-13-pro-5g-6.67-8gb-256gb-200mp-camera-dual-sim-5100mah-battery-1.5k-120hz-amoled-display-blue-419051573.html",
+      "score": 6.192,
+      "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/37/5150914/1.jpg?8627",
+      "short_reason": "within budget, 8GB RAM"
+    }
+  ],
+  "reasoning": "The Samsung Galaxy A35 5G was selected as the best phone under ₦500k because it fits within the budget, offers 8GB of RAM, and has an excellent 5.0/5 rating from customers. This combination of affordability, performance, and high user satisfaction makes it the top choice.",
+  "warnings": null
+}

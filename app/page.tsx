@@ -1,31 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Navbar } from "@/components/navbar";
 import { HomeSearch } from "@/components/home-search";
-import { ProgressTimeline } from "@/components/progress-timeline";
 import {
   ResultsDashboard,
-  type NovaPilotResponse,
+  type NovaPilotJobResponse,
 } from "@/components/results-dashboard";
 
 export default function Page() {
-  const [appState, setAppState] = useState<"home" | "progress" | "results">(
-    "home",
-  );
+  const [appState, setAppState] = useState<"home" | "results">("home");
   const [searchQuery, setSearchQuery] = useState("");
-  const [result, setResult] = useState<NovaPilotResponse | null>(null);
+  const [result, setResult] = useState<NovaPilotJobResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultUserLocation =
     process.env.NEXT_PUBLIC_DEFAULT_USER_LOCATION?.trim() || "Nigeria";
-  const requestTimeoutMs = 120000;
+  const requestTimeoutMs = 240000;
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setError(null);
     setResult(null);
-    setAppState("progress");
+    setIsSubmitting(true);
+    setAppState("results");
 
     const baseUrl =
       process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000";
@@ -33,33 +32,41 @@ export default function Page() {
     try {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), requestTimeoutMs);
-      const response = await fetch(`${baseUrl}/api/run-novapilot`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          query,
-          user_location: defaultUserLocation,
-          top_n: 3,
-        }),
-      });
-      window.clearTimeout(timeoutId);
+      try {
+        const response = await fetch(`${baseUrl}/api/run-novapilot`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            query,
+            user_location: defaultUserLocation,
+            top_n: 3,
+          }),
+        });
+        window.clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const payload = (await response.json()) as NovaPilotJobResponse;
+        setResult(payload);
+        setIsSubmitting(false);
+        setAppState("results");
+      } finally {
+        window.clearTimeout(timeoutId);
       }
-
-      const payload = (await response.json()) as NovaPilotResponse;
-      setResult(payload);
-      setAppState("results");
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        setError("Recommendation request timed out. Check your live Nova Act workflow configuration and try fewer stores.");
+        setError(
+          "The request to the backend did not complete in time. Open the warning panel for the exact live extraction cause (for example Nova connectivity failure).",
+        );
       } else {
         setError(err instanceof Error ? err.message : "Could not fetch recommendations");
       }
+      setIsSubmitting(false);
       setAppState("results");
     }
   };
@@ -68,8 +75,39 @@ export default function Page() {
     setSearchQuery("");
     setResult(null);
     setError(null);
+    setIsSubmitting(false);
     setAppState("home");
   };
+
+  useEffect(() => {
+    if (!result?.job_id || result.status === "completed" || result.status === "failed") {
+      return;
+    }
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000";
+
+    const interval = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${baseUrl}/api/run-novapilot/${result.job_id}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("The live report session expired or the backend restarted. Run the search again.");
+            setResult((current) =>
+              current ? { ...current, status: "failed", error: "Job not found" } : current,
+            );
+          }
+          return;
+        }
+        const payload = (await response.json()) as NovaPilotJobResponse;
+        setResult(payload);
+      } catch {
+        // Best-effort polling; the dashboard already shows current status.
+      }
+    }, 4000);
+
+    return () => window.clearInterval(interval);
+  }, [result?.job_id, result?.status]);
 
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -91,19 +129,6 @@ export default function Page() {
             </motion.div>
           )}
 
-          {appState === "progress" && (
-            <motion.div
-              key="progress"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-4xl"
-            >
-              <ProgressTimeline query={searchQuery} />
-            </motion.div>
-          )}
-
           {appState === "results" && (
             <motion.div
               key="results"
@@ -118,6 +143,7 @@ export default function Page() {
                 onReset={handleReset}
                 result={result}
                 error={error}
+                isLoading={isSubmitting && !result && !error}
               />
             </motion.div>
           )}

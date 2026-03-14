@@ -2,9 +2,9 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,8 +25,28 @@ class Settings(BaseSettings):
 
     app_name: str = "NovaPilot Backend"
     app_version: str = "0.1.0"
+    nova_api_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("NOVA_API_KEY", "NOVA_ACT_API_KEY", "nova_api_key"),
+    )
+    aws_access_key_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("AWS_ACCESS_KEY_ID", "aws_access_key_id"),
+    )
+    aws_secret_access_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key"),
+    )
+    aws_session_token: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("AWS_SESSION_TOKEN", "aws_session_token"),
+    )
+    aws_region: str = Field(
+        default="us-east-1",
+        validation_alias=AliasChoices("AWS_REGION", "aws_region"),
+    )
     default_supported_sites: List[str] = Field(
-        default_factory=lambda: ["jumia", "konga", "slot", "jiji", "amazon"]
+        default_factory=lambda: ["jumia", "amazon"]
     )
     default_currency: str = "NGN"
     log_level: str = "INFO"
@@ -35,11 +55,13 @@ class Settings(BaseSettings):
     use_bedrock_site_selection: bool = True
     use_nova_act_automation: bool = True
     nova_act_strict_mode: bool = True
-    nova_act_workflow_amazon: str = ""
-    nova_act_workflow_jumia: str = ""
-    nova_act_workflow_konga: str = ""
-    nova_act_workflow_slot: str = ""
-    nova_act_workflow_jiji: str = ""
+    fallback_to_mock_on_live_failure: bool = False
+    bedrock_interpret_model_id: str = "amazon.nova-lite-v1:0"
+    bedrock_report_model_id: str = "amazon.nova-lite-v1:0"
+    bedrock_site_selection_model_id: str = "amazon.nova-lite-v1:0"
+    nova_act_timeout_seconds: int = 180
+    nova_act_poll_interval_seconds: float = 2.0
+    jobs_storage_path: str = str(BACKEND_ROOT / ".novapilot_jobs.json")
 
     @field_validator("default_supported_sites", mode="before")
     @classmethod
@@ -52,5 +74,9 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Return cached settings instance."""
+    """Return cached settings instance.
+
+    Settings are loaded once per backend process. Restart the backend to reload
+    changes made to backend/.env, repo .env, or shell-provided environment vars.
+    """
     return Settings()

@@ -1,0 +1,879 @@
+{
+  "d9f5555c21504944ad37f04a43e1f023": {
+    "job_id": "d9f5555c21504944ad37f04a43e1f023",
+    "status": "completed",
+    "query": "Best phones under \u20a6500k",
+    "interpreted_request": {
+      "category": "smartphone",
+      "budget_currency": "NGN",
+      "budget_max": 500000.0,
+      "use_case": "general",
+      "priority_specs": [
+        "price",
+        "rating",
+        "RAM"
+      ],
+      "top_n": 3
+    },
+    "instant_guidance": {
+      "headline": "Top Smartphones Under \u20a6500k: Best Picks for Your Budget",
+      "summary": "Explore our top recommendations for smartphones under \u20a6500k, focusing on price, rating, and RAM.",
+      "key_specs": [
+        "Price under \u20a6500k",
+        "High user rating",
+        "Adequate RAM for smooth performance"
+      ],
+      "target_models": [
+        "Samsung Galaxy A52",
+        "Xiaomi Redmi Note 10 Pro",
+        "Infinix Hot 10 Pro"
+      ],
+      "featured_recommendations": [
+        "{'model': 'Samsung Galaxy A52', 'store': 'jumia', 'link': 'https://www.jumia.com.ng/samsung-galaxy-a52-128gb-6gb-ram-black/'}",
+        "{'model': 'Xiaomi Redmi Note 10 Pro', 'store': 'jumia', 'link': 'https://www.jumia.com.ng/xiaomi-redmi-note-10-pro-6gb-ram-128gb-storage-black/'}",
+        "{'model': 'Infinix Hot 10 Pro', 'store': 'jumia', 'link': 'https://www.jumia.com.ng/infinix-hot-10-pro-6gb-ram-128gb-storage-black/'}"
+      ],
+      "market_insights": [
+        "The demand for affordable smartphones with good specifications is high in Nigeria.",
+        "Brands like Samsung, Xiaomi, and Infinix are popular choices in this price range.",
+        "RAM and user ratings are critical factors for buyers in this budget."
+      ],
+      "budget_bands": [
+        "Under \u20a6200k",
+        "\u20a6200k - \u20a6300k",
+        "\u20a6300k - \u20a6400k",
+        "\u20a6400k - \u20a6500k"
+      ],
+      "budget_note": "Ensure to check for ongoing discounts and promotions on Jumia to maximize your budget.",
+      "selected_sites": [
+        "jumia"
+      ],
+      "next_step": "Visit the provided links on Jumia to explore these models in detail and make your purchase."
+    },
+    "current_step": "Generate recommendation report",
+    "execution_log": [
+      {
+        "step_id": "request_validation",
+        "label": "Validate request payload",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:13.331850+00:00",
+        "details": {
+          "query_length": 23,
+          "site_count": 0
+        }
+      },
+      {
+        "step_id": "interpretation",
+        "label": "Interpret shopping query",
+        "status": "started",
+        "timestamp": "2026-03-13T12:33:13.381951+00:00",
+        "details": null
+      },
+      {
+        "step_id": "interpretation",
+        "label": "Interpret shopping query",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:13.481198+00:00",
+        "details": {
+          "category": "smartphone",
+          "use_case": "general",
+          "budget_max": 500000.0
+        }
+      },
+      {
+        "step_id": "site_selection",
+        "label": "Select target stores",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:13.585224+00:00",
+        "details": {
+          "selected_sites": [
+            "jumia"
+          ],
+          "source": "fallback",
+          "allowed_sites": [
+            "jumia"
+          ],
+          "confidence": 0.55,
+          "rationale": "Nigeria fallback prioritized local marketplaces first and included Amazon only when category or budget suggested it."
+        }
+      },
+      {
+        "step_id": "planning",
+        "label": "Build execution plan",
+        "status": "started",
+        "timestamp": "2026-03-13T12:33:13.618803+00:00",
+        "details": null
+      },
+      {
+        "step_id": "planning",
+        "label": "Build execution plan",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:13.649892+00:00",
+        "details": {
+          "steps_count": 5,
+          "steps": [
+            "search_jumia",
+            "collect_jumia_products",
+            "normalize_products",
+            "rank_products",
+            "generate_report"
+          ]
+        }
+      },
+      {
+        "step_id": "automation_jumia",
+        "label": "Run jumia store automation",
+        "status": "started",
+        "timestamp": "2026-03-13T12:33:13.665240+00:00",
+        "details": null
+      },
+      {
+        "step_id": "automation_jumia",
+        "label": "Run jumia store automation",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:24.411612+00:00",
+        "details": {
+          "raw_products_collected": 3,
+          "source": "live",
+          "used_mock_fallback": false
+        }
+      },
+      {
+        "step_id": "normalization_jumia",
+        "label": "Normalize jumia products",
+        "status": "started",
+        "timestamp": "2026-03-13T12:33:24.429774+00:00",
+        "details": null
+      },
+      {
+        "step_id": "normalization_jumia",
+        "label": "Normalize jumia products",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:24.595990+00:00",
+        "details": {
+          "normalized_products": 3
+        }
+      },
+      {
+        "step_id": "filtering_jumia",
+        "label": "Filter jumia products against intent",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:24.767995+00:00",
+        "details": {
+          "before_count": 3,
+          "after_count": 3
+        }
+      },
+      {
+        "step_id": "ranking",
+        "label": "Rank products",
+        "status": "started",
+        "timestamp": "2026-03-13T12:33:24.782086+00:00",
+        "details": {
+          "input_products": 3
+        }
+      },
+      {
+        "step_id": "ranking",
+        "label": "Rank products",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:24.849692+00:00",
+        "details": {
+          "ranked_products": 3
+        }
+      },
+      {
+        "step_id": "report_generation",
+        "label": "Generate recommendation report",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:33:24.864623+00:00",
+        "details": {
+          "top_n": 3
+        }
+      }
+    ],
+    "final_report": {
+      "status": "success",
+      "query": "Best phones under \u20a6500k",
+      "interpreted_request": {
+        "category": "smartphone",
+        "budget_currency": "NGN",
+        "budget_max": 500000.0,
+        "use_case": "general",
+        "priority_specs": [
+          "price",
+          "rating",
+          "RAM"
+        ],
+        "top_n": 3
+      },
+      "execution_log": [
+        {
+          "step_id": "request_validation",
+          "label": "Validate request payload",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:13.331850+00:00",
+          "details": {
+            "query_length": 23,
+            "site_count": 0
+          }
+        },
+        {
+          "step_id": "interpretation",
+          "label": "Interpret shopping query",
+          "status": "started",
+          "timestamp": "2026-03-13T12:33:13.381951+00:00",
+          "details": null
+        },
+        {
+          "step_id": "interpretation",
+          "label": "Interpret shopping query",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:13.481198+00:00",
+          "details": {
+            "category": "smartphone",
+            "use_case": "general",
+            "budget_max": 500000.0
+          }
+        },
+        {
+          "step_id": "site_selection",
+          "label": "Select target stores",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:13.585224+00:00",
+          "details": {
+            "selected_sites": [
+              "jumia"
+            ],
+            "source": "fallback",
+            "allowed_sites": [
+              "jumia"
+            ],
+            "confidence": 0.55,
+            "rationale": "Nigeria fallback prioritized local marketplaces first and included Amazon only when category or budget suggested it."
+          }
+        },
+        {
+          "step_id": "planning",
+          "label": "Build execution plan",
+          "status": "started",
+          "timestamp": "2026-03-13T12:33:13.618803+00:00",
+          "details": null
+        },
+        {
+          "step_id": "planning",
+          "label": "Build execution plan",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:13.649892+00:00",
+          "details": {
+            "steps_count": 5,
+            "steps": [
+              "search_jumia",
+              "collect_jumia_products",
+              "normalize_products",
+              "rank_products",
+              "generate_report"
+            ]
+          }
+        },
+        {
+          "step_id": "automation_jumia",
+          "label": "Run jumia store automation",
+          "status": "started",
+          "timestamp": "2026-03-13T12:33:13.665240+00:00",
+          "details": null
+        },
+        {
+          "step_id": "automation_jumia",
+          "label": "Run jumia store automation",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:24.411612+00:00",
+          "details": {
+            "raw_products_collected": 3,
+            "source": "live",
+            "used_mock_fallback": false
+          }
+        },
+        {
+          "step_id": "normalization_jumia",
+          "label": "Normalize jumia products",
+          "status": "started",
+          "timestamp": "2026-03-13T12:33:24.429774+00:00",
+          "details": null
+        },
+        {
+          "step_id": "normalization_jumia",
+          "label": "Normalize jumia products",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:24.595990+00:00",
+          "details": {
+            "normalized_products": 3
+          }
+        },
+        {
+          "step_id": "filtering_jumia",
+          "label": "Filter jumia products against intent",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:24.767995+00:00",
+          "details": {
+            "before_count": 3,
+            "after_count": 3
+          }
+        },
+        {
+          "step_id": "ranking",
+          "label": "Rank products",
+          "status": "started",
+          "timestamp": "2026-03-13T12:33:24.782086+00:00",
+          "details": {
+            "input_products": 3
+          }
+        },
+        {
+          "step_id": "ranking",
+          "label": "Rank products",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:24.849692+00:00",
+          "details": {
+            "ranked_products": 3
+          }
+        },
+        {
+          "step_id": "report_generation",
+          "label": "Generate recommendation report",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:33:24.864623+00:00",
+          "details": {
+            "top_n": 3
+          }
+        }
+      ],
+      "best_pick": {
+        "name": "Samsung Galaxy A35 5G 6.6\" 8GB 256GB ROM Android 14 - Awesome Navy",
+        "store": "jumia",
+        "price": 465000.0,
+        "currency": "NGN",
+        "rating": 5.0,
+        "ram_gb": null,
+        "storage_gb": 256,
+        "cpu": null,
+        "gpu": null,
+        "screen_size": "6.6 inch",
+        "url": "https://www.jumia.com.ng/galaxy-a35-5g-6.6-8gb-256gb-rom-android-14-awesome-navy-samsung-mpg7340069.html",
+        "score": 6.476,
+        "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/32/9810883/1.jpg?5506",
+        "short_reason": "within budget, 5.0/5 rating"
+      },
+      "alternatives": [
+        {
+          "name": "Samsung Galaxy A35 5G 6.6\" 8GB 256GB ROM Android 14 - Awesome Navy",
+          "store": "jumia",
+          "price": 459000.0,
+          "currency": "NGN",
+          "rating": 0.0,
+          "ram_gb": null,
+          "storage_gb": 256,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": "6.6 inch",
+          "url": "https://www.jumia.com.ng/samsung-galaxy-a35-5g-6.6-8gb-256gb-rom-android-14-awesome-navy-399086395.html",
+          "score": 4.927,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/59/3680993/1.jpg?4505",
+          "short_reason": "within budget"
+        },
+        {
+          "name": "XIAOMI Redmi Note 13 Pro 5G 6.67\" 8GB 256GB 200MP Camera Dual SIM 5100mAh Battery 1.5K 120Hz AMOLED Display - Blue",
+          "store": "jumia",
+          "price": 407990.0,
+          "currency": "NGN",
+          "rating": 0.0,
+          "ram_gb": null,
+          "storage_gb": 256,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": "67 inch",
+          "url": "https://www.jumia.com.ng/xiaomi-redmi-note-13-pro-5g-6.67-8gb-256gb-200mp-camera-dual-sim-5100mah-battery-1.5k-120hz-amoled-display-blue-419051573.html",
+          "score": 4.875,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/37/5150914/1.jpg?8627",
+          "short_reason": "within budget"
+        }
+      ],
+      "comparison_table": [
+        {
+          "name": "Samsung Galaxy A35 5G 6.6\" 8GB 256GB ROM Android 14 - Awesome Navy",
+          "store": "jumia",
+          "price": 465000.0,
+          "currency": "NGN",
+          "rating": 5.0,
+          "ram_gb": null,
+          "storage_gb": 256,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": "6.6 inch",
+          "url": "https://www.jumia.com.ng/galaxy-a35-5g-6.6-8gb-256gb-rom-android-14-awesome-navy-samsung-mpg7340069.html",
+          "score": 6.476,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/32/9810883/1.jpg?5506",
+          "short_reason": "within budget, 5.0/5 rating"
+        },
+        {
+          "name": "Samsung Galaxy A35 5G 6.6\" 8GB 256GB ROM Android 14 - Awesome Navy",
+          "store": "jumia",
+          "price": 459000.0,
+          "currency": "NGN",
+          "rating": 0.0,
+          "ram_gb": null,
+          "storage_gb": 256,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": "6.6 inch",
+          "url": "https://www.jumia.com.ng/samsung-galaxy-a35-5g-6.6-8gb-256gb-rom-android-14-awesome-navy-399086395.html",
+          "score": 4.927,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/59/3680993/1.jpg?4505",
+          "short_reason": "within budget"
+        },
+        {
+          "name": "XIAOMI Redmi Note 13 Pro 5G 6.67\" 8GB 256GB 200MP Camera Dual SIM 5100mAh Battery 1.5K 120Hz AMOLED Display - Blue",
+          "store": "jumia",
+          "price": 407990.0,
+          "currency": "NGN",
+          "rating": 0.0,
+          "ram_gb": null,
+          "storage_gb": 256,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": "67 inch",
+          "url": "https://www.jumia.com.ng/xiaomi-redmi-note-13-pro-5g-6.67-8gb-256gb-200mp-camera-dual-sim-5100mah-battery-1.5k-120hz-amoled-display-blue-419051573.html",
+          "score": 4.875,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/37/5150914/1.jpg?8627",
+          "short_reason": "within budget"
+        }
+      ],
+      "reasoning": "The Samsung Galaxy A35 5G was selected as the best phone under \u20a6500k due to its excellent balance of features and affordability. It offers a 6.6-inch screen, 8GB RAM, and 256GB storage, all for \u20a6465,000. Additionally, it boasts a perfect 5.0 rating, making it a highly recommended choice within the budget.",
+      "warnings": null
+    },
+    "error": null,
+    "updated_at": "2026-03-13T12:33:26.250057+00:00"
+  },
+  "87cbe43a86b64b0a9a1b674aa79cbb20": {
+    "job_id": "87cbe43a86b64b0a9a1b674aa79cbb20",
+    "status": "completed",
+    "query": "Laptop for programming under \u20a6900k",
+    "interpreted_request": {
+      "category": "laptop",
+      "budget_currency": "NGN",
+      "budget_max": 900000.0,
+      "use_case": "programming",
+      "priority_specs": [
+        "RAM",
+        "CPU",
+        "storage"
+      ],
+      "top_n": 3
+    },
+    "instant_guidance": {
+      "headline": "Top Laptops for Programming Under \u20a6900k",
+      "summary": "Explore our top picks for programming laptops under \u20a6900k, focusing on RAM, CPU, and storage.",
+      "key_specs": [
+        "At least 8GB RAM",
+        "Intel Core i5 or AMD Ryzen 5 processor",
+        "256GB SSD storage"
+      ],
+      "target_models": [
+        "Dell Inspiron 15 3000",
+        "HP Pavilion x360",
+        "Lenovo IdeaPad 3"
+      ],
+      "featured_recommendations": [
+        "{'model': 'Dell Inspiron 15 3000', 'store': 'jumia', 'price': '\u20a6750,000'}",
+        "{'model': 'HP Pavilion x360', 'store': 'jumia', 'price': '\u20a6800,000'}",
+        "{'model': 'Lenovo IdeaPad 3', 'store': 'jumia', 'price': '\u20a6850,000'}"
+      ],
+      "market_insights": [
+        "Programming laptops are in high demand due to the growing tech industry in Nigeria.",
+        "Budget-friendly options with good performance are preferred by students and professionals alike.",
+        "Look for models with expandable storage and good battery life."
+      ],
+      "budget_bands": [
+        "Under \u20a6700k",
+        "\u20a6700k - \u20a6800k",
+        "\u20a6800k - \u20a6900k"
+      ],
+      "budget_note": "Ensure the laptop meets your programming needs within the budget.",
+      "selected_sites": [
+        "jumia"
+      ],
+      "next_step": "Visit jumia.com.ng to explore the recommended models and make your purchase."
+    },
+    "current_step": "Generate recommendation report",
+    "execution_log": [
+      {
+        "step_id": "request_validation",
+        "label": "Validate request payload",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:12.868346+00:00",
+        "details": {
+          "query_length": 34,
+          "site_count": 0
+        }
+      },
+      {
+        "step_id": "interpretation",
+        "label": "Interpret shopping query",
+        "status": "started",
+        "timestamp": "2026-03-13T12:45:12.899359+00:00",
+        "details": null
+      },
+      {
+        "step_id": "interpretation",
+        "label": "Interpret shopping query",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:12.929330+00:00",
+        "details": {
+          "category": "laptop",
+          "use_case": "programming",
+          "budget_max": 900000.0
+        }
+      },
+      {
+        "step_id": "site_selection",
+        "label": "Select target stores",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:13.035797+00:00",
+        "details": {
+          "selected_sites": [
+            "jumia"
+          ],
+          "source": "fallback",
+          "allowed_sites": [
+            "jumia"
+          ],
+          "confidence": 0.55,
+          "rationale": "Nigeria fallback prioritized local marketplaces first and included Amazon only when category or budget suggested it."
+        }
+      },
+      {
+        "step_id": "planning",
+        "label": "Build execution plan",
+        "status": "started",
+        "timestamp": "2026-03-13T12:45:13.100297+00:00",
+        "details": null
+      },
+      {
+        "step_id": "planning",
+        "label": "Build execution plan",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:13.125133+00:00",
+        "details": {
+          "steps_count": 5,
+          "steps": [
+            "search_jumia",
+            "collect_jumia_products",
+            "normalize_products",
+            "rank_products",
+            "generate_report"
+          ]
+        }
+      },
+      {
+        "step_id": "automation_jumia",
+        "label": "Run jumia store automation",
+        "status": "started",
+        "timestamp": "2026-03-13T12:45:13.142692+00:00",
+        "details": null
+      },
+      {
+        "step_id": "automation_jumia",
+        "label": "Run jumia store automation",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:28.227064+00:00",
+        "details": {
+          "raw_products_collected": 2,
+          "source": "live",
+          "used_mock_fallback": false
+        }
+      },
+      {
+        "step_id": "normalization_jumia",
+        "label": "Normalize jumia products",
+        "status": "started",
+        "timestamp": "2026-03-13T12:45:28.251951+00:00",
+        "details": null
+      },
+      {
+        "step_id": "normalization_jumia",
+        "label": "Normalize jumia products",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:28.382349+00:00",
+        "details": {
+          "normalized_products": 2
+        }
+      },
+      {
+        "step_id": "filtering_jumia",
+        "label": "Filter jumia products against intent",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:28.484221+00:00",
+        "details": {
+          "before_count": 2,
+          "after_count": 2
+        }
+      },
+      {
+        "step_id": "ranking",
+        "label": "Rank products",
+        "status": "started",
+        "timestamp": "2026-03-13T12:45:28.515965+00:00",
+        "details": {
+          "input_products": 2
+        }
+      },
+      {
+        "step_id": "ranking",
+        "label": "Rank products",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:28.630877+00:00",
+        "details": {
+          "ranked_products": 2
+        }
+      },
+      {
+        "step_id": "report_generation",
+        "label": "Generate recommendation report",
+        "status": "completed",
+        "timestamp": "2026-03-13T12:45:28.658983+00:00",
+        "details": {
+          "top_n": 3
+        }
+      }
+    ],
+    "final_report": {
+      "status": "success",
+      "query": "Laptop for programming under \u20a6900k",
+      "interpreted_request": {
+        "category": "laptop",
+        "budget_currency": "NGN",
+        "budget_max": 900000.0,
+        "use_case": "programming",
+        "priority_specs": [
+          "RAM",
+          "CPU",
+          "storage"
+        ],
+        "top_n": 3
+      },
+      "execution_log": [
+        {
+          "step_id": "request_validation",
+          "label": "Validate request payload",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:12.868346+00:00",
+          "details": {
+            "query_length": 34,
+            "site_count": 0
+          }
+        },
+        {
+          "step_id": "interpretation",
+          "label": "Interpret shopping query",
+          "status": "started",
+          "timestamp": "2026-03-13T12:45:12.899359+00:00",
+          "details": null
+        },
+        {
+          "step_id": "interpretation",
+          "label": "Interpret shopping query",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:12.929330+00:00",
+          "details": {
+            "category": "laptop",
+            "use_case": "programming",
+            "budget_max": 900000.0
+          }
+        },
+        {
+          "step_id": "site_selection",
+          "label": "Select target stores",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:13.035797+00:00",
+          "details": {
+            "selected_sites": [
+              "jumia"
+            ],
+            "source": "fallback",
+            "allowed_sites": [
+              "jumia"
+            ],
+            "confidence": 0.55,
+            "rationale": "Nigeria fallback prioritized local marketplaces first and included Amazon only when category or budget suggested it."
+          }
+        },
+        {
+          "step_id": "planning",
+          "label": "Build execution plan",
+          "status": "started",
+          "timestamp": "2026-03-13T12:45:13.100297+00:00",
+          "details": null
+        },
+        {
+          "step_id": "planning",
+          "label": "Build execution plan",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:13.125133+00:00",
+          "details": {
+            "steps_count": 5,
+            "steps": [
+              "search_jumia",
+              "collect_jumia_products",
+              "normalize_products",
+              "rank_products",
+              "generate_report"
+            ]
+          }
+        },
+        {
+          "step_id": "automation_jumia",
+          "label": "Run jumia store automation",
+          "status": "started",
+          "timestamp": "2026-03-13T12:45:13.142692+00:00",
+          "details": null
+        },
+        {
+          "step_id": "automation_jumia",
+          "label": "Run jumia store automation",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:28.227064+00:00",
+          "details": {
+            "raw_products_collected": 2,
+            "source": "live",
+            "used_mock_fallback": false
+          }
+        },
+        {
+          "step_id": "normalization_jumia",
+          "label": "Normalize jumia products",
+          "status": "started",
+          "timestamp": "2026-03-13T12:45:28.251951+00:00",
+          "details": null
+        },
+        {
+          "step_id": "normalization_jumia",
+          "label": "Normalize jumia products",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:28.382349+00:00",
+          "details": {
+            "normalized_products": 2
+          }
+        },
+        {
+          "step_id": "filtering_jumia",
+          "label": "Filter jumia products against intent",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:28.484221+00:00",
+          "details": {
+            "before_count": 2,
+            "after_count": 2
+          }
+        },
+        {
+          "step_id": "ranking",
+          "label": "Rank products",
+          "status": "started",
+          "timestamp": "2026-03-13T12:45:28.515965+00:00",
+          "details": {
+            "input_products": 2
+          }
+        },
+        {
+          "step_id": "ranking",
+          "label": "Rank products",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:28.630877+00:00",
+          "details": {
+            "ranked_products": 2
+          }
+        },
+        {
+          "step_id": "report_generation",
+          "label": "Generate recommendation report",
+          "status": "completed",
+          "timestamp": "2026-03-13T12:45:28.658983+00:00",
+          "details": {
+            "top_n": 3
+          }
+        }
+      ],
+      "best_pick": {
+        "name": "DELL Latitude 7490 Intel Core I7- 512GB SSD/16GB RAM TOUCHSCREEN / BACKLIGHT KEYBOARD WINDOWS 11 PRO+ LAPTOP STAND",
+        "store": "jumia",
+        "price": 590000.0,
+        "currency": "NGN",
+        "rating": 4.5,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "cpu": "Intel Core i7",
+        "gpu": null,
+        "screen_size": null,
+        "url": "https://www.jumia.com.ng/latitude-3190-2in1-x360-intel-pentium-8gb-ram128gb-ssd-touchscreen-win-10-usb-light-dell-mpg11452342.html",
+        "score": 7.968,
+        "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/57/6532561/1.jpg?8000",
+        "short_reason": "within budget, 16GB RAM, Intel Core i7, 4.5/5 rating"
+      },
+      "alternatives": [
+        {
+          "name": "DELL Latitude 7490 Intel Core I5, Keyboard Backlit, 16GB RAM, 512GB SSD, Windows 11 + MOUSE",
+          "store": "jumia",
+          "price": 430000.0,
+          "currency": "NGN",
+          "rating": null,
+          "ram_gb": 16,
+          "storage_gb": 512,
+          "cpu": "Intel Core i5",
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.jumia.com.ng/latitude-7490-intel-core-i5-keyboard-backlit-16gb-ram-512gb-ssd-windows-11-mouse-dell-mpg11476571.html",
+          "score": 7.317,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/32/7905814/1.jpg?9740",
+          "short_reason": "within budget, 16GB RAM, Intel Core i5"
+        }
+      ],
+      "comparison_table": [
+        {
+          "name": "DELL Latitude 7490 Intel Core I7- 512GB SSD/16GB RAM TOUCHSCREEN / BACKLIGHT KEYBOARD WINDOWS 11 PRO+ LAPTOP STAND",
+          "store": "jumia",
+          "price": 590000.0,
+          "currency": "NGN",
+          "rating": 4.5,
+          "ram_gb": 16,
+          "storage_gb": 512,
+          "cpu": "Intel Core i7",
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.jumia.com.ng/latitude-3190-2in1-x360-intel-pentium-8gb-ram128gb-ssd-touchscreen-win-10-usb-light-dell-mpg11452342.html",
+          "score": 7.968,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/57/6532561/1.jpg?8000",
+          "short_reason": "within budget, 16GB RAM, Intel Core i7, 4.5/5 rating"
+        },
+        {
+          "name": "DELL Latitude 7490 Intel Core I5, Keyboard Backlit, 16GB RAM, 512GB SSD, Windows 11 + MOUSE",
+          "store": "jumia",
+          "price": 430000.0,
+          "currency": "NGN",
+          "rating": null,
+          "ram_gb": 16,
+          "storage_gb": 512,
+          "cpu": "Intel Core i5",
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.jumia.com.ng/latitude-7490-intel-core-i5-keyboard-backlit-16gb-ram-512gb-ssd-windows-11-mouse-dell-mpg11476571.html",
+          "score": 7.317,
+          "image_url": "https://ng.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/32/7905814/1.jpg?9740",
+          "short_reason": "within budget, 16GB RAM, Intel Core i5"
+        }
+      ],
+      "reasoning": "The DELL Latitude 7490 was selected as the best product because it fits within the budget of \u20a6900k, offers 16GB of RAM and an Intel Core i7 processor, which are ideal for programming tasks, and it has a solid 4.5 out of 5 rating from users.",
+      "warnings": null
+    },
+    "error": null,
+    "updated_at": "2026-03-13T12:45:30.043251+00:00"
+  }
+}

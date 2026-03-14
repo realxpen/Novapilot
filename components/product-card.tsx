@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShoppingCart, Sparkles, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { getRepresentativeProductImage, resolveProductImage } from "./product-image-fallback";
 
 interface ProductCardProps {
   product: {
@@ -27,7 +28,16 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const fallbackImage = getRepresentativeProductImage(product.name);
+  const [displayImage, setDisplayImage] = useState(() => resolveProductImage(product.image, product.name));
+  const [fallbackTried, setFallbackTried] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setDisplayImage(resolveProductImage(product.image, product.name));
+    setFallbackTried(false);
+    setImageFailed(false);
+  }, [product.image, product.name]);
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-zinc-200 hover:border-zinc-300 transition-colors group">
@@ -35,12 +45,18 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-zinc-50 flex-shrink-0 border border-zinc-100">
           {!imageFailed ? (
             <img
-              src={product.image}
+              src={displayImage}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              referrerPolicy="no-referrer"
               loading="lazy"
-              onError={() => setImageFailed(true)}
+              onError={() => {
+                if (!fallbackTried && displayImage !== fallbackImage) {
+                  setDisplayImage(fallbackImage);
+                  setFallbackTried(true);
+                  return;
+                }
+                setImageFailed(true);
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-400 text-[10px] bg-zinc-100 px-1 text-center">

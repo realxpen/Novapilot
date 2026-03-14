@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any, Dict, List, Optional
 
@@ -12,6 +11,7 @@ from app.clients.interfaces import (
     ReportGenerationClient,
     SiteRecommendationClient,
 )
+from app.config import get_settings
 from app.schemas.product import Product
 from app.schemas.response import InterpretedRequest
 from app.utils.logger import get_logger
@@ -28,19 +28,14 @@ class BedrockClient(InterpretationClient, ReportGenerationClient, SiteRecommenda
     """
 
     def __init__(self) -> None:
-        self.aws_region = os.getenv("AWS_REGION", "us-east-1")
-        self.interpret_model_id = os.getenv(
-            "NOVAPILOT_BEDROCK_INTERPRET_MODEL_ID",
-            "amazon.nova-lite-v1:0",
-        )
-        self.report_model_id = os.getenv(
-            "NOVAPILOT_BEDROCK_REPORT_MODEL_ID",
-            "amazon.nova-lite-v1:0",
-        )
-        self.site_selection_model_id = os.getenv(
-            "NOVAPILOT_BEDROCK_SITE_SELECTION_MODEL_ID",
-            "amazon.nova-lite-v1:0",
-        )
+        settings = get_settings()
+        self.aws_region = settings.aws_region
+        self.aws_access_key_id = settings.aws_access_key_id
+        self.aws_secret_access_key = settings.aws_secret_access_key
+        self.aws_session_token = settings.aws_session_token
+        self.interpret_model_id = settings.bedrock_interpret_model_id
+        self.report_model_id = settings.bedrock_report_model_id
+        self.site_selection_model_id = settings.bedrock_site_selection_model_id
         self._client = self._build_client()
 
     def interpret_query(self, query: str, top_n: int) -> Optional[Dict[str, Any]]:
@@ -92,6 +87,40 @@ class BedrockClient(InterpretationClient, ReportGenerationClient, SiteRecommenda
         text = self._invoke_text_model(prompt=prompt, model_id=self.report_model_id)
         return text.strip() if text else None
 
+    def generate_instant_guidance(
+        self,
+        query: str,
+        interpreted: InterpretedRequest,
+        selected_sites: List[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Generate rich instant guidance for the pre-report experience."""
+        if self._client is None:
+            return None
+
+        prompt = (
+            "You are NovaPilot, a shopping advisor. Return only valid JSON with keys: "
+            "headline, summary, key_specs, target_models, featured_recommendations, market_insights, "
+            "budget_bands, budget_note, next_step. "
+            "All list fields must be JSON arrays of strings. "
+            "Make the advice specific, practical, and concise for the user's market.\n"
+            f"Original query: {query}\n"
+            f"Category: {interpreted.category}\n"
+            f"Use case: {interpreted.use_case}\n"
+            f"Budget currency: {interpreted.budget_currency}\n"
+            f"Budget max: {interpreted.budget_max}\n"
+            f"Priority specs: {interpreted.priority_specs}\n"
+            f"Selected live stores: {selected_sites}\n"
+        )
+        text = self._invoke_text_model(prompt=prompt, model_id=self.report_model_id)
+        if not text:
+            return None
+
+        parsed = self._parse_json_object(text)
+        if not parsed:
+            logger.warning("Bedrock instant guidance response was not valid JSON: %s", text[:240])
+            return None
+        return parsed
+
     def recommend_sites(
         self,
         query: str,
@@ -133,7 +162,13 @@ class BedrockClient(InterpretationClient, ReportGenerationClient, SiteRecommenda
         try:
             import boto3  # local import so app still runs without boto3 installed
 
-            return boto3.client("bedrock-runtime", region_name=self.aws_region)
+            client_kwargs: Dict[str, Any] = {"region_name": self.aws_region}
+            if self.aws_access_key_id and self.aws_secret_access_key:
+                client_kwargs["aws_access_key_id"] = self.aws_access_key_id
+                client_kwargs["aws_secret_access_key"] = self.aws_secret_access_key
+            if self.aws_session_token:
+                client_kwargs["aws_session_token"] = self.aws_session_token
+            return boto3.client("bedrock-runtime", **client_kwargs)
         except Exception as exc:  # noqa: BLE001 - caller uses graceful fallback
             logger.warning("Bedrock client init failed: %s", exc)
             return None

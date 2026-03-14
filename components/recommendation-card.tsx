@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Award, Sparkles, ShoppingCart, Star, Cpu, HardDrive, CheckCircle2, ExternalLink, ImageOff } from "lucide-react";
+import { getRepresentativeProductImage, resolveProductImage } from "./product-image-fallback";
 
 interface RecommendationCardProps {
   recommendation: {
@@ -24,7 +25,18 @@ interface RecommendationCardProps {
 }
 
 export function RecommendationCard({ recommendation }: RecommendationCardProps) {
+  const fallbackImage = getRepresentativeProductImage(recommendation.name);
+  const [displayImage, setDisplayImage] = useState(() =>
+    resolveProductImage(recommendation.image, recommendation.name),
+  );
+  const [fallbackTried, setFallbackTried] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setDisplayImage(resolveProductImage(recommendation.image, recommendation.name));
+    setFallbackTried(false);
+    setImageFailed(false);
+  }, [recommendation.image, recommendation.name]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden relative group">
@@ -42,12 +54,18 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
         <div className="relative h-48 md:h-auto md:col-span-2 w-full bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-100">
           {!imageFailed ? (
             <img
-              src={recommendation.image}
+              src={displayImage}
               alt={recommendation.name}
               className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
               loading="lazy"
-              onError={() => setImageFailed(true)}
+              onError={() => {
+                if (!fallbackTried && displayImage !== fallbackImage) {
+                  setDisplayImage(fallbackImage);
+                  setFallbackTried(true);
+                  return;
+                }
+                setImageFailed(true);
+              }}
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500 bg-zinc-100">
