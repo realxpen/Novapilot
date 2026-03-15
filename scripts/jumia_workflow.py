@@ -365,7 +365,25 @@ def _is_relevant_for_category(title: str | None, category: str) -> bool:
             "tempered glass",
             "power bank",
         ),
-        "tablet": ("case", "cover", "screen protector", "keyboard case", "stylus only"),
+        "tablet": (
+            "case",
+            "cover",
+            "screen protector",
+            "keyboard case",
+            "stylus only",
+            "graphic tablet",
+            "graphics tablet",
+            "drawing tablet",
+            "drawing pad",
+            "pen tablet",
+            "pen display",
+            "digitizer",
+            "wacom",
+            "huion",
+            "ugee",
+            "xp-pen",
+            "veikk",
+        ),
         "audio": ("case", "cover", "speaker", "microphone", "cable"),
     }
     if any(term in text for term in blocked.get(category.lower(), ())):
@@ -1005,14 +1023,14 @@ def run_jumia_workflow(
     query: str,
     category: str = "electronics",
     budget_max: float | None = None,
-    max_results: int = 2,
+    max_results: int = 5,
     search_terms: list[str] | None = None,
 ) -> Any:
     workflow_start = time.monotonic()
     hard_deadline = workflow_start + 55
     cleaned_terms = normalize_search_terms(category, query, search_terms or [query])
-    target_count = max(1, min(max_results, 3))
-    quick_target_count = min(target_count, 2)
+    target_count = max(1, min(max_results, 5))
+    quick_target_count = min(target_count, 3)
     collected: list[dict[str, Any]] = []
     seen_keys: set[str] = set()
     workflow_errors: list[str] = []
@@ -1116,9 +1134,9 @@ def run_jumia_workflow(
         category=category,
         budget_max=budget_max,
         max_results=target_count,
-        search_terms=cleaned_terms[:3],
+        search_terms=cleaned_terms[:4],
         deadline_ts=hard_deadline,
-        max_terms=3,
+        max_terms=4,
         max_cards_per_term=8,
         max_snapshot_fetches=0,
         search_timeout=4,
@@ -1137,10 +1155,11 @@ def run_jumia_workflow(
     if len(collected) >= quick_target_count:
         return _finish({"products": collected[:target_count]}, "enough_products_after_first_pass")
 
-    # 2) Secondary deterministic pass with broad term before using Nova Act.
+    # 2) Secondary deterministic pass: keep trying concrete product names before the raw query.
     if len(collected) < quick_target_count and time.monotonic() < hard_deadline:
         second_phase_start = time.monotonic()
-        broad_terms = _dedupe_terms([query, *cleaned_terms])
+        follow_up_terms = cleaned_terms[4:] if len(cleaned_terms) > 4 else cleaned_terms[1:]
+        broad_terms = _dedupe_terms([*follow_up_terms, query])
         second_pass = fallback_extract_from_search(
             query=query,
             category=category,
@@ -1148,7 +1167,7 @@ def run_jumia_workflow(
             max_results=quick_target_count - len(collected),
             search_terms=broad_terms,
             deadline_ts=hard_deadline,
-            max_terms=1,
+            max_terms=3,
             max_cards_per_term=6,
             max_snapshot_fetches=0,
             search_timeout=4,
@@ -1185,7 +1204,7 @@ def run_jumia_workflow(
             ) as nova:
                 result = nova.act_get(
                     build_prompt(act_term, category, budget_max),
-                    schema=build_schema(1),
+                    schema=build_schema(min(2, max(1, target_count - len(collected)))),
                     max_steps=3,
                     timeout=12,
                 )
@@ -1258,7 +1277,7 @@ def main() -> None:
     parser.add_argument(
         "--max-results",
         type=int,
-        default=2,
+        default=5,
         help="Maximum number of valid products to collect",
     )
     parser.add_argument(

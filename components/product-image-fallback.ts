@@ -79,3 +79,10 @@ export function resolveProductImage(primaryUrl: string | null | undefined, name:
   }
   return getRepresentativeProductImage(name);
 }
+
+export function resolveLiveProductImage(primaryUrl: string | null | undefined): string | null {
+  if (isLikelyHttpImage(primaryUrl)) {
+    return primaryUrl!.trim();
+  }
+  return null;
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Award, Sparkles, ShoppingCart, Star, Cpu, HardDrive, CheckCircle2, ExternalLink, ImageOff } from "lucide-react";
-import { getRepresentativeProductImage, resolveProductImage } from "./product-image-fallback";
+import { resolveLiveProductImage } from "./product-image-fallback";
 
 interface RecommendationCardProps {
   recommendation: {
@@ -25,18 +25,15 @@ interface RecommendationCardProps {
 }
 
 export function RecommendationCard({ recommendation }: RecommendationCardProps) {
-  const fallbackImage = getRepresentativeProductImage(recommendation.name);
   const [displayImage, setDisplayImage] = useState(() =>
-    resolveProductImage(recommendation.image, recommendation.name),
+    resolveLiveProductImage(recommendation.image),
   );
-  const [fallbackTried, setFallbackTried] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
-    setDisplayImage(resolveProductImage(recommendation.image, recommendation.name));
-    setFallbackTried(false);
+    setDisplayImage(resolveLiveProductImage(recommendation.image));
     setImageFailed(false);
-  }, [recommendation.image, recommendation.name]);
+  }, [recommendation.image]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden relative group">
@@ -52,18 +49,13 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
 
       <div className="grid grid-cols-1 md:grid-cols-5">
         <div className="relative h-48 md:h-auto md:col-span-2 w-full bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-100">
-          {!imageFailed ? (
+          {!imageFailed && displayImage ? (
             <img
               src={displayImage}
               alt={recommendation.name}
               className="w-full h-full object-cover"
               loading="lazy"
               onError={() => {
-                if (!fallbackTried && displayImage !== fallbackImage) {
-                  setDisplayImage(fallbackImage);
-                  setFallbackTried(true);
-                  return;
-                }
                 setImageFailed(true);
               }}
             />

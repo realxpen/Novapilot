@@ -89,7 +89,11 @@ def build_prompt(
     }.get(category.lower(), "product")
     excluded = {
         "laptop": "accessories, laptop bags, laptop sleeves, laptop skins, stickers, books, courses, backpacks, decals, and any non-laptop result",
-        "tablet": "tablet cases, keyboard cases, stylus-only listings, screen protectors, chargers, accessories, phone results, and any non-tablet result",
+        "tablet": (
+            "tablet cases, keyboard cases, stylus-only listings, screen protectors, chargers, "
+            "accessories, phone results, graphics tablets, drawing tablets, pen tablets, pen displays, "
+            "digitizers, Wacom/Huion/UGEE/XP-Pen listings, and any non-standalone-tablet result"
+        ),
         "smartphone": "phone cases, chargers, screen protectors, earphones, replacement parts, accessories, and any non-phone result",
         "audio": "phone cases, speakers, microphones, cables, accessories, and any non-headphone result",
     }.get(category.lower(), "accessories and unrelated results")
@@ -105,11 +109,9 @@ def build_prompt(
 
     return (
         "You are already on Amazon search results for the first concrete product term.\n"
-        f"Set delivery location/country to '{country}' if possible.\n"
-        "Prefer listings and product pages that display local pricing in NGN when available.\n"
-        "If NGN is not available, keep the original displayed currency code exactly as shown.\n"
         f"Use these search terms in order only when needed: {ordered_terms}.\n"
         "Stay on Amazon search results pages.\n"
+        "Stay on amazon.com only.\n"
         "Do not inspect sponsored rows, carousels, ads, or unrelated widgets.\n"
         f"Ignore and skip {excluded}.\n"
         f"Collect up to {max_results} real {product_type} listings from visible search result cards only.\n"
@@ -122,8 +124,10 @@ def build_prompt(
         f"{budget_guard}\n"
         "Prefer extracting directly from the visible search cards.\n"
         "Return only product detail page URLs, never search or category URLs.\n"
-        "Ensure 'product_url' is an absolute https URL on amazon.*.\n"
-        "Use 'image_url', 'rating', and 'details' from the search results when visible; otherwise return null.\n"
+        "Ensure 'product_url' is an absolute https URL on www.amazon.com and points to a real product page.\n"
+        "Do not return amazon.ng, search URLs, redirect URLs, or category URLs.\n"
+        "Use the actual visible product image URL from the search card when available; otherwise return null.\n"
+        "Use 'rating' and 'details' from the search results when visible; otherwise return null.\n"
         "Return only the structured response requested by the schema."
     )
 
@@ -139,7 +143,7 @@ def run_amazon_workflow(
     category: str = "electronics",
     budget_max: float | None = None,
     budget_currency: str | None = "USD",
-    max_results: int = 3,
+    max_results: int = 5,
     search_terms: list[str] | None = None,
 ) -> Any:
     if not NOVA_ACT_KEY:
@@ -163,7 +167,7 @@ def run_amazon_workflow(
         result = nova.act_get(
             prompt,
             schema=build_schema(max_results),
-            max_steps=6,
+            max_steps=8,
         )
         payload = result.parsed_response
         if not isinstance(payload, dict):
@@ -207,7 +211,7 @@ def main() -> None:
     parser.add_argument(
         "--max-results",
         type=int,
-        default=3,
+        default=5,
         help="Maximum number of valid products to collect",
     )
     parser.add_argument(

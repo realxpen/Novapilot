@@ -22,6 +22,49 @@ from app.utils.scoring import (
 
 logger = get_logger(__name__)
 settings = get_settings()
+FAMILY_STOPWORDS = {
+    "android",
+    "backlight",
+    "battery",
+    "black",
+    "blue",
+    "gold",
+    "gray",
+    "grey",
+    "green",
+    "keyboard",
+    "laptop",
+    "midnight",
+    "navy",
+    "phone",
+    "pro",
+    "red",
+    "rom",
+    "silver",
+    "ssd",
+    "stand",
+    "storage",
+    "tablet",
+    "touchscreen",
+    "ultra",
+    "white",
+    "windows",
+}
+FAMILY_SPEC_PATTERNS = (
+    r"^\d{1,4}(gb|tb|mah|hz|mp)$",
+    r"^\d+(?:\.\d+)?in$",
+    r"^\d+(?:\.\d+)?$",
+    r"^i[3579]$",
+    r"^ryzen[3579]$",
+    r"^snapdragon$",
+    r"^dimensity$",
+    r"^helio$",
+    r"^core$",
+    r"^intel$",
+    r"^amd$",
+    r"^gen\d+$",
+    r"^\d+(st|nd|rd|th)$",
+)
 
 
 class RankingService:
@@ -127,33 +170,20 @@ class RankingService:
     def _product_dedupe_key(self, product: Product) -> str:
         name = (product.name or "").lower()
         cleaned = re.sub(r"[^a-z0-9\s]", " ", name)
-        color_stopwords = {
-            "black",
-            "blue",
-            "navy",
-            "white",
-            "gray",
-            "grey",
-            "gold",
-            "silver",
-            "green",
-            "red",
-            "purple",
-            "awesome",
-            "midnight",
-            "sunset",
-            "iceblue",
-            "ice",
-            "lemon",
-            "lilac",
-        }
-        tokens = [token for token in cleaned.split() if token not in color_stopwords]
-        base_tokens = tokens[:12] if tokens else ["unknown"]
-        base = " ".join(base_tokens)
+        tokens = [token for token in cleaned.split() if token]
+        family_tokens: list[str] = []
+        for token in tokens:
+            if token in FAMILY_STOPWORDS:
+                continue
+            if any(re.fullmatch(pattern, token, flags=re.IGNORECASE) for pattern in FAMILY_SPEC_PATTERNS):
+                continue
+            if token.endswith("gb") or token.endswith("tb"):
+                continue
+            family_tokens.append(token)
 
-        ram = product.ram_gb or self._extract_first_int(name, r"(\d{1,2})\s*gb")
-        storage = product.storage_gb or self._extract_first_int(name, r"(\d{2,4})\s*gb")
-        return f"{product.store}|{base}|ram:{ram or 0}|storage:{storage or 0}"
+        # Alternatives should represent distinct product families, not nearby variants.
+        family_key = " ".join(family_tokens[:6]) if family_tokens else "unknown"
+        return f"{product.store}|{family_key}"
 
     def _extract_first_int(self, text: str, pattern: str) -> int | None:
         match = re.search(pattern, text, flags=re.IGNORECASE)

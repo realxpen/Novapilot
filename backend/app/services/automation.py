@@ -93,19 +93,22 @@ class AutomationService:
         if site_key == "jumia":
             category_key = interpreted.category.lower()
             if category_key == "smartphone":
-                payload["max_results"] = 3
-                payload["max_search_terms"] = 3
+                payload["max_results"] = max(5, int(interpreted.top_n or 5))
+                payload["max_search_terms"] = 5
             elif category_key == "laptop":
-                payload["max_results"] = 3
-                payload["max_search_terms"] = 3
+                payload["max_results"] = max(5, int(interpreted.top_n or 5))
+                payload["max_search_terms"] = 5
+            elif category_key == "tablet":
+                payload["max_results"] = max(5, int(interpreted.top_n or 5))
+                payload["max_search_terms"] = 5
             else:
-                payload["max_results"] = 2
-                payload["max_search_terms"] = 2
+                payload["max_results"] = max(4, min(int(interpreted.top_n or 4), 5))
+                payload["max_search_terms"] = 4
         elif site_key == "amazon":
-            payload["max_results"] = max(3, int(interpreted.top_n or 3))
-            payload["max_search_terms"] = 3
+            payload["max_results"] = max(5, int(interpreted.top_n or 5))
+            payload["max_search_terms"] = 4
         else:
-            payload["max_results"] = 2
+            payload["max_results"] = max(4, min(int(interpreted.top_n or 4), 5))
             payload["max_search_terms"] = 3
         target_budget_currency = site_budget_currency(site)
         converted_budget_max = convert_amount(
@@ -216,22 +219,22 @@ class AutomationService:
 
         if category == "tablet" and use_case == "ui/ux design":
             return [
-                "iPad Air 5 256GB tablet",
-                "iPad Pro 11 tablet",
-                "Samsung Galaxy Tab S9 FE tablet",
-                "Samsung Galaxy Tab S8 tablet",
-                "Xiaomi Pad 6 tablet",
-                "tablet stylus 8GB 256GB",
+                "Apple iPad Air 5 256GB tablet",
+                "Apple iPad Pro 11 128GB tablet",
+                "Samsung Galaxy Tab S9 FE 8GB 256GB tablet",
+                "Samsung Galaxy Tab S8 8GB 128GB tablet",
+                "Xiaomi Pad 6 8GB 256GB tablet",
+                "Redmi Pad Pro 8GB 256GB tablet",
             ]
 
         if category == "tablet":
             return [
-                "Samsung Galaxy Tab S9 FE tablet",
-                "Samsung Galaxy Tab S8 tablet",
-                "Xiaomi Pad 6 tablet",
-                "Redmi Pad Pro tablet",
-                "iPad Air tablet",
-                "tablet 8GB 128GB",
+                "Samsung Galaxy Tab S9 FE 8GB 256GB tablet",
+                "Samsung Galaxy Tab S8 8GB 128GB tablet",
+                "Xiaomi Pad 6 8GB 256GB tablet",
+                "Redmi Pad Pro 8GB 256GB tablet",
+                "Apple iPad Air 5 256GB tablet",
+                "tablet 8GB 128GB standalone tablet",
             ]
 
         if category == "audio":

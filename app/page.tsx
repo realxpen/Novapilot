@@ -58,7 +58,7 @@ export default function Page() {
           body: JSON.stringify({
             query,
             user_location: defaultUserLocation,
-            top_n: 3,
+            top_n: 5,
           }),
         });
         window.clearTimeout(timeoutId);

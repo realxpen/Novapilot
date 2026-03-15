@@ -2,7 +2,7 @@
 
 import re
 from typing import Any, Dict, List
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from app.schemas.product import Product
 from app.utils.logger import get_logger
@@ -75,7 +75,7 @@ class ExtractionService:
         name = item.get("name", "Unknown Product")
         details = item.get("details", "")
         text_blob = " ".join(str(part) for part in [name, details] if part)
-        product_url = self._normalize_url("amazon", item.get("product_url"))
+        product_url = self._normalize_amazon_product_url(item.get("product_url"))
         image_url = self._normalize_image_url("amazon", item.get("image_url"))
         return Product(
             name=name,
@@ -120,6 +120,36 @@ class ExtractionService:
         if site.lower() == "jumia":
             if "jumia.com.ng" not in lowered and "jumia.is" not in lowered:
                 return None
+        if site.lower() == "amazon":
+            allowed_hosts = (
+                "amazon.com",
+                "media-amazon.com",
+                "images-amazon.com",
+                "ssl-images-amazon.com",
+                "m.media-amazon.com",
+                "images-na.ssl-images-amazon.com",
+            )
+            if not any(host in lowered for host in allowed_hosts):
+                return None
+        return url
+
+    def _normalize_amazon_product_url(self, value: Any) -> str | None:
+        if not isinstance(value, str):
+            return None
+        url = value.strip()
+        lowered = url.lower()
+        if not lowered:
+            return None
+        asin_match = re.search(r"/(?:dp|gp/product)/([a-z0-9]{10})(?:[/?]|$)", lowered, flags=re.IGNORECASE)
+        if asin_match:
+            return f"https://www.amazon.com/dp/{asin_match.group(1).upper()}"
+
+        parsed = urlparse(url)
+        host = (parsed.netloc or "").lower()
+        if host in {"www.amazon.com", "amazon.com", "smile.amazon.com"}:
+            return url
+        if "amazon." in host:
+            return None
         return url
 
     def _extract_cpu(self, text: str) -> str | None:
