@@ -65,7 +65,9 @@ jobs:
         with:
           context: .
           file: ./backend/Dockerfile
+          platforms: linux/amd64
           push: true
+          provenance: false
           tags: |
             ${{ steps.image.outputs.image_uri }}:latest
             ${{ steps.image.outputs.image_uri }}:${{ github.sha }}
