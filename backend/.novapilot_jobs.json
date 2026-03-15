@@ -70,7 +70,7 @@
   },
   "c75cd23203c54dbaabde690353515560": {
     "job_id": "c75cd23203c54dbaabde690353515560",
-    "status": "running",
+    "status": "completed",
     "query": "Tablets for graphic design",
     "interpreted_request": {
       "category": "tablets",
@@ -118,7 +118,7 @@
       ],
       "next_step": "Visit Jumia or Amazon to explore the featured recommendations and compare prices."
     },
-    "current_step": "Run amazon store automation",
+    "current_step": "Generate recommendation report",
     "execution_log": [
       {
         "step_id": "request_validation",
@@ -214,10 +214,352 @@
         "status": "started",
         "timestamp": "2026-03-14T03:06:07.571708+00:00",
         "details": null
+      },
+      {
+        "step_id": "automation_amazon",
+        "label": "Run amazon store automation",
+        "status": "completed",
+        "timestamp": "2026-03-14T03:07:37.983671+00:00",
+        "details": {
+          "raw_products_collected": 3,
+          "source": "live"
+        }
+      },
+      {
+        "step_id": "normalization_amazon",
+        "label": "Normalize amazon products",
+        "status": "started",
+        "timestamp": "2026-03-14T03:07:38.009306+00:00",
+        "details": null
+      },
+      {
+        "step_id": "normalization_amazon",
+        "label": "Normalize amazon products",
+        "status": "completed",
+        "timestamp": "2026-03-14T03:07:38.100658+00:00",
+        "details": {
+          "normalized_products": 3
+        }
+      },
+      {
+        "step_id": "filtering_amazon",
+        "label": "Filter amazon products against intent",
+        "status": "completed",
+        "timestamp": "2026-03-14T03:07:38.297039+00:00",
+        "details": {
+          "before_count": 3,
+          "after_count": 3
+        }
+      },
+      {
+        "step_id": "ranking",
+        "label": "Rank products",
+        "status": "started",
+        "timestamp": "2026-03-14T03:07:38.316945+00:00",
+        "details": {
+          "input_products": 3
+        }
+      },
+      {
+        "step_id": "ranking",
+        "label": "Rank products",
+        "status": "completed",
+        "timestamp": "2026-03-14T03:07:38.424927+00:00",
+        "details": {
+          "ranked_products": 3
+        }
+      },
+      {
+        "step_id": "report_generation",
+        "label": "Generate recommendation report",
+        "status": "completed",
+        "timestamp": "2026-03-14T03:07:38.562834+00:00",
+        "details": {
+          "top_n": 3
+        }
       }
     ],
-    "final_report": null,
+    "final_report": {
+      "status": "partial_success",
+      "query": "Tablets for graphic design",
+      "interpreted_request": {
+        "category": "tablets",
+        "budget_currency": "NGN",
+        "budget_max": null,
+        "use_case": "graphic design",
+        "priority_specs": [
+          "high resolution",
+          "pressure sensitivity",
+          "large screen size"
+        ],
+        "top_n": 3
+      },
+      "execution_log": [
+        {
+          "step_id": "request_validation",
+          "label": "Validate request payload",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:04:59.053782+00:00",
+          "details": {
+            "query_length": 26,
+            "site_count": 0
+          }
+        },
+        {
+          "step_id": "interpretation",
+          "label": "Interpret shopping query",
+          "status": "started",
+          "timestamp": "2026-03-14T03:04:59.065138+00:00",
+          "details": null
+        },
+        {
+          "step_id": "interpretation",
+          "label": "Interpret shopping query",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:04:59.916797+00:00",
+          "details": {
+            "category": "tablets",
+            "use_case": "graphic design",
+            "budget_max": null
+          }
+        },
+        {
+          "step_id": "site_selection",
+          "label": "Select target stores",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:05:01.238870+00:00",
+          "details": {
+            "selected_sites": [
+              "jumia",
+              "amazon"
+            ],
+            "source": "model",
+            "allowed_sites": [
+              "jumia",
+              "amazon"
+            ],
+            "confidence": 0.95,
+            "rationale": "For tablets in Nigeria, Jumia is highly recommended due to its extensive electronics category and local relevance. Amazon is also included as it offers a wide range of graphic design tablets, though it may not have the same local focus as Jumia. Both sites fit the user's budget and category needs, and they are likely to have current availability."
+          }
+        },
+        {
+          "step_id": "planning",
+          "label": "Build execution plan",
+          "status": "started",
+          "timestamp": "2026-03-14T03:05:01.253449+00:00",
+          "details": null
+        },
+        {
+          "step_id": "planning",
+          "label": "Build execution plan",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:05:01.264894+00:00",
+          "details": {
+            "steps_count": 7,
+            "steps": [
+              "search_jumia",
+              "collect_jumia_products",
+              "search_amazon",
+              "collect_amazon_products",
+              "normalize_products",
+              "rank_products",
+              "generate_report"
+            ]
+          }
+        },
+        {
+          "step_id": "automation_jumia",
+          "label": "Run jumia store automation",
+          "status": "started",
+          "timestamp": "2026-03-14T03:05:01.270559+00:00",
+          "details": null
+        },
+        {
+          "step_id": "automation_jumia",
+          "label": "Run jumia store automation",
+          "status": "failed",
+          "timestamp": "2026-03-14T03:06:07.565733+00:00",
+          "details": {
+            "error": "Nova Act live workflow failed for jumia: Nova Act live workflow failed for jumia: \n\nActTimeoutError(\n    message = Timed out; try increasing the 'timeout' kwarg on the 'act' call\n    metadata = ActMetadata(\n        session_id = 019cea4e-2c29-7f40-81aa-1d5944f10418\n        act_id = 019cea4e-7c63-7ca5-88e7-5021540595c7\n        num_steps_executed = 1\n        start_time = 2026-03-14 04:05:37.664531 W. Central Africa Standard Time\n        end_time = 2026-03-14 04:05:57.116829 W. Central Africa Standard Time\n        step_server_times_s = ['8.502']\n        time_worked = 19.5s\n        prompt = 'You are on Jumia results for 'tablets graphic design'. Find one relevant product card near the top. Open only one product detail page.  Return one product or an empty array. Use absolute https jumia.com.ng product URL. Do not browse other pages or run more searches. Return only schema JSON., format output with jsonschema: {\"type\": \"object\", \"additionalProperties\": false, \"required\": [\"products\"], \"properties\": {\"products\": {\"type\": \"array\", \"maxItems\": 1, \"items\": {\"type\": \"object\", \"additionalProperties\": false, \"required\": [\"title\", \"price_text\", \"currency\", \"url\"], \"properties\": {\"title\": {\"type\": [\"string\", \"null\"]}, \"price_text\": {\"type\": [\"string\", \"null\"]}, \"currency\": {\"type\": [\"string\", \"null\"]}, \"rating_text\": {\"type\": [\"string\", \"null\"]}, \"specs\": {\"type\": [\"string\", \"null\"]}, \"url\": {\"type\": [\"string\", \"null\"]}, \"image\": {\"type\": [\"string\", \"null\"]}}}}}}'\n    )\n)\n\nPlease consider providing feedback: https://amazonexteu.qualtrics.com/jfe/form/SV_bd8dHa7Em6kNkMe"
+          }
+        },
+        {
+          "step_id": "automation_amazon",
+          "label": "Run amazon store automation",
+          "status": "started",
+          "timestamp": "2026-03-14T03:06:07.571708+00:00",
+          "details": null
+        },
+        {
+          "step_id": "automation_amazon",
+          "label": "Run amazon store automation",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:07:37.983671+00:00",
+          "details": {
+            "raw_products_collected": 3,
+            "source": "live"
+          }
+        },
+        {
+          "step_id": "normalization_amazon",
+          "label": "Normalize amazon products",
+          "status": "started",
+          "timestamp": "2026-03-14T03:07:38.009306+00:00",
+          "details": null
+        },
+        {
+          "step_id": "normalization_amazon",
+          "label": "Normalize amazon products",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:07:38.100658+00:00",
+          "details": {
+            "normalized_products": 3
+          }
+        },
+        {
+          "step_id": "filtering_amazon",
+          "label": "Filter amazon products against intent",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:07:38.297039+00:00",
+          "details": {
+            "before_count": 3,
+            "after_count": 3
+          }
+        },
+        {
+          "step_id": "ranking",
+          "label": "Rank products",
+          "status": "started",
+          "timestamp": "2026-03-14T03:07:38.316945+00:00",
+          "details": {
+            "input_products": 3
+          }
+        },
+        {
+          "step_id": "ranking",
+          "label": "Rank products",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:07:38.424927+00:00",
+          "details": {
+            "ranked_products": 3
+          }
+        },
+        {
+          "step_id": "report_generation",
+          "label": "Generate recommendation report",
+          "status": "completed",
+          "timestamp": "2026-03-14T03:07:38.562834+00:00",
+          "details": {
+            "top_n": 3
+          }
+        }
+      ],
+      "best_pick": {
+        "name": "Graphic Drawing Tablet, Digital Sketch, Design for PC and Computer/Pad-12 Hot Keys, Compatible Windows/MAC/Android,The Adjustable Ergonomic Stand,16384 Upgrade Levels Battery-Free...",
+        "store": "amazon",
+        "price": 52461.53,
+        "currency": "NGN",
+        "rating": 4.3,
+        "ram_gb": null,
+        "storage_gb": null,
+        "cpu": null,
+        "gpu": null,
+        "screen_size": null,
+        "url": "https://www.amazon.ng/Graphic-Drawing-Tablet-Digital-Sketch/dp/B09N3X5J8B?th=1&psc=1",
+        "score": 5.202,
+        "image_url": "https://m.media-amazon.com/images/I/71qJ6xKJmCL._AC_UY218_.jpg",
+        "short_reason": "4.3/5 rating"
+      },
+      "alternatives": [
+        {
+          "name": "Stylus of 16384 Levels Pressure, UGEE M708 Graphics Tablet for Paint, Design, Art Creation...",
+          "store": "amazon",
+          "price": 55383.0,
+          "currency": "NGN",
+          "rating": 4.4,
+          "ram_gb": null,
+          "storage_gb": null,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.amazon.ng/Stylus-16384-Levels-Pressure-UGEE-M708/dp/B08ZCH6L9F?th=1&psc=1",
+          "score": 5.193,
+          "image_url": "https://m.media-amazon.com/images/I/71qJ6xKJmCL._AC_UY218_.jpg",
+          "short_reason": "4.4/5 rating"
+        },
+        {
+          "name": "2021 HUION KAMVAS 16 Graphics Drawing Tablet with Full-Laminated Screen Anti-Glare Pen Display for Digital Art, Animation, Photo Editing, 15.6\u201d FHD 1920x1080, 8192 Pen Pressure, 8192 Levels, 10ms Report Rate",
+          "store": "amazon",
+          "price": 114097.06,
+          "currency": "NGN",
+          "rating": 4.5,
+          "ram_gb": null,
+          "storage_gb": null,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.amazon.ng/2021-Huion-Kamvas-Graphics-Drawing/dp/B08ZCH6L9F?th=1&psc=1",
+          "score": 4.803,
+          "image_url": "https://m.media-amazon.com/images/I/71qJ6xKJmCL._AC_UY218_.jpg",
+          "short_reason": "4.5/5 rating"
+        }
+      ],
+      "comparison_table": [
+        {
+          "name": "Graphic Drawing Tablet, Digital Sketch, Design for PC and Computer/Pad-12 Hot Keys, Compatible Windows/MAC/Android,The Adjustable Ergonomic Stand,16384 Upgrade Levels Battery-Free...",
+          "store": "amazon",
+          "price": 52461.53,
+          "currency": "NGN",
+          "rating": 4.3,
+          "ram_gb": null,
+          "storage_gb": null,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.amazon.ng/Graphic-Drawing-Tablet-Digital-Sketch/dp/B09N3X5J8B?th=1&psc=1",
+          "score": 5.202,
+          "image_url": "https://m.media-amazon.com/images/I/71qJ6xKJmCL._AC_UY218_.jpg",
+          "short_reason": "4.3/5 rating"
+        },
+        {
+          "name": "Stylus of 16384 Levels Pressure, UGEE M708 Graphics Tablet for Paint, Design, Art Creation...",
+          "store": "amazon",
+          "price": 55383.0,
+          "currency": "NGN",
+          "rating": 4.4,
+          "ram_gb": null,
+          "storage_gb": null,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.amazon.ng/Stylus-16384-Levels-Pressure-UGEE-M708/dp/B08ZCH6L9F?th=1&psc=1",
+          "score": 5.193,
+          "image_url": "https://m.media-amazon.com/images/I/71qJ6xKJmCL._AC_UY218_.jpg",
+          "short_reason": "4.4/5 rating"
+        },
+        {
+          "name": "2021 HUION KAMVAS 16 Graphics Drawing Tablet with Full-Laminated Screen Anti-Glare Pen Display for Digital Art, Animation, Photo Editing, 15.6\u201d FHD 1920x1080, 8192 Pen Pressure, 8192 Levels, 10ms Report Rate",
+          "store": "amazon",
+          "price": 114097.06,
+          "currency": "NGN",
+          "rating": 4.5,
+          "ram_gb": null,
+          "storage_gb": null,
+          "cpu": null,
+          "gpu": null,
+          "screen_size": null,
+          "url": "https://www.amazon.ng/2021-Huion-Kamvas-Graphics-Drawing/dp/B08ZCH6L9F?th=1&psc=1",
+          "score": 4.803,
+          "image_url": "https://m.media-amazon.com/images/I/71qJ6xKJmCL._AC_UY218_.jpg",
+          "short_reason": "4.5/5 rating"
+        }
+      ],
+      "reasoning": "The best product was selected due to its high 4.3/5 rating and comprehensive features, including 16,384 pressure levels, compatibility with multiple operating systems, and an ergonomic stand, making it well-suited for professional graphic design tasks.",
+      "warnings": [
+        "Jumia automation failed before extraction: Nova Act request timed out."
+      ]
+    },
     "error": null,
-    "updated_at": "2026-03-14T03:06:07.571762+00:00"
+    "updated_at": "2026-03-14T03:07:39.584674+00:00"
   }
 }
