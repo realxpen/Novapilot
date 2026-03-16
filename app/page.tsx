@@ -79,6 +79,10 @@ export default function Page() {
         setError(
           "The request to the backend did not complete in time. Open the warning panel for the exact live extraction cause (for example Nova connectivity failure).",
         );
+      } else if (err instanceof TypeError && err.message === "Failed to fetch") {
+        setError(
+          "The frontend could not reach the backend. Confirm NEXT_PUBLIC_API_BASE_URL is correct and App Runner CORS allows this Amplify domain.",
+        );
       } else {
         setError(err instanceof Error ? err.message : "Could not fetch recommendations");
       }
