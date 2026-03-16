@@ -202,6 +202,26 @@ function formatPrice(price: number, currency: string): string {
   }).format(price);
 }
 
+function normalizeRecommendationKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatWarningMessage(warning: string): string {
+  const lowered = warning.toLowerCase();
+  if (
+    lowered.includes("automation failed before extraction") &&
+    lowered.includes("nova act actuator could not start")
+  ) {
+    const store = warning.split(" automation failed before extraction")[0]?.trim() || "A store";
+    return `${store} live extraction is temporarily unavailable, so the report is using the remaining live store results plus reference recommendations where needed.`;
+  }
+  return warning;
+}
+
 function fallbackProductImage(product: Product): string {
   return getRepresentativeProductImage(product.name);
 }
@@ -489,6 +509,7 @@ export function ResultsDashboard({
   const report = result?.final_report ?? null;
   const bestPick = report?.best_pick ?? null;
   const alternatives = report?.alternatives ?? [];
+  const minimumRecommendationCount = 3;
   const comparison = report?.comparison_table ?? [];
   const reportHasProducts = Boolean(bestPick) || comparison.length > 0;
   const primaryReportWarning =
@@ -528,6 +549,79 @@ export function ResultsDashboard({
     }
     return preview;
   }, [report]);
+
+  const supplementalAlternativeCards = useMemo(() => {
+    if (!report || !bestPick) {
+      return [];
+    }
+
+    const liveCount = 1 + alternatives.length;
+    if (liveCount >= minimumRecommendationCount) {
+      return [];
+    }
+
+    const existingKeys = new Set(
+      [bestPick.name, ...alternatives.map((item) => item.name)].map(normalizeRecommendationKey),
+    );
+
+    return guidanceCards
+      .filter((card) => {
+        const candidateKey = normalizeRecommendationKey(card.model);
+        return !Array.from(existingKeys).some(
+          (existingKey) =>
+            existingKey === candidateKey ||
+            existingKey.includes(candidateKey) ||
+            candidateKey.includes(existingKey),
+        );
+      })
+      .slice(0, minimumRecommendationCount - liveCount)
+      .map((card, index) => ({
+        id: `reference-${card.model}-${index}`,
+        name: card.model,
+        price: "Check live stores",
+        store: "reference",
+        rating: 0,
+        score: 0,
+        image: card.image,
+        keySpec: card.subtitle,
+        url: undefined,
+        details: {
+          cpu: "Varies by listing",
+          ram: "Varies by listing",
+          storage: "Varies by listing",
+          gpu: "Varies by listing",
+          screen: "Varies by listing",
+          reason:
+            "Reference model family added because the live report returned fewer than 3 valid store listings.",
+        },
+      }));
+  }, [alternatives, bestPick, guidanceCards, report]);
+
+  const displayedAlternativeCards = useMemo(() => {
+    const liveCards = alternatives.map((alt) => ({
+      id: `${alt.store}-${alt.name}`,
+      name: alt.name,
+      price: formatPrice(alt.price, alt.currency),
+      store: alt.store,
+      rating: alt.rating ?? 0,
+      score: alt.score ?? 0,
+      image: resolveProductImage(alt.image_url, alt.name),
+      keySpec: `${alt.cpu || "Unknown CPU"}, ${
+        alt.ram_gb ? `${alt.ram_gb}GB RAM` : "RAM n/a"
+      }, ${alt.storage_gb ? `${alt.storage_gb}GB` : "Storage n/a"}`,
+      url: alt.url || undefined,
+      details: {
+        cpu: alt.cpu || "Not specified",
+        ram: alt.ram_gb ? `${alt.ram_gb}GB` : "Not specified",
+        storage: alt.storage_gb ? `${alt.storage_gb}GB` : "Not specified",
+        gpu: alt.gpu || "Not specified",
+        screen: alt.screen_size || "Not specified",
+        reason: alt.short_reason || "Alternative based on ranking.",
+      },
+    }));
+
+    return [...liveCards, ...supplementalAlternativeCards];
+  }, [alternatives, supplementalAlternativeCards]);
 
   useEffect(() => {
     if (!showWaitingState || !result?.job_id) {
@@ -596,7 +690,7 @@ export function ResultsDashboard({
             <div className="space-y-1">
               {report.warnings.map((warning, index) => (
                 <p key={`${warning}-${index}`} className="text-sm">
-                  {warning}
+                  {formatWarningMessage(warning)}
                 </p>
               ))}
             </div>
@@ -867,7 +961,7 @@ export function ResultsDashboard({
                     <div className="mt-4 space-y-2">
                       {report.warnings.map((warning, index) => (
                         <p key={`${warning}-${index}`} className="text-sm text-rose-800">
-                          {warning}
+                          {formatWarningMessage(warning)}
                         </p>
                       ))}
                     </div>
@@ -883,40 +977,22 @@ export function ResultsDashboard({
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900">Alternative Options</h3>
                   <p className="mt-1 text-sm text-zinc-500">
-                    Real listings pulled from the product pages that matched this search.
+                    {supplementalAlternativeCards.length > 0
+                      ? "Live listings first, with reference model families added when fewer than 3 valid store results were available."
+                      : "Real listings pulled from the product pages that matched this search."}
                   </p>
                 </div>
               </div>
-              {alternatives.length === 0 ? (
+              {displayedAlternativeCards.length === 0 ? (
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-500">
                   No alternatives available.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {alternatives.map((alt) => (
+                  {displayedAlternativeCards.map((alt) => (
                     <ProductCard
-                      key={`${alt.store}-${alt.name}`}
-                      product={{
-                        id: `${alt.store}-${alt.name}`,
-                        name: alt.name,
-                        price: formatPrice(alt.price, alt.currency),
-                        store: alt.store,
-                        rating: alt.rating ?? 0,
-                        score: alt.score ?? 0,
-                        image: resolveProductImage(alt.image_url, alt.name),
-                        keySpec: `${alt.cpu || "Unknown CPU"}, ${
-                          alt.ram_gb ? `${alt.ram_gb}GB RAM` : "RAM n/a"
-                        }, ${alt.storage_gb ? `${alt.storage_gb}GB` : "Storage n/a"}`,
-                        url: alt.url || undefined,
-                        details: {
-                          cpu: alt.cpu || "Not specified",
-                          ram: alt.ram_gb ? `${alt.ram_gb}GB` : "Not specified",
-                          storage: alt.storage_gb ? `${alt.storage_gb}GB` : "Not specified",
-                          gpu: alt.gpu || "Not specified",
-                          screen: alt.screen_size || "Not specified",
-                          reason: alt.short_reason || "Alternative based on ranking.",
-                        },
-                      }}
+                      key={alt.id}
+                      product={alt}
                     />
                   ))}
                 </div>

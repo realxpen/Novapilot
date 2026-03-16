@@ -29,8 +29,10 @@ You can also place the same variables in a repo-level `.env`. The backend loads 
 ## Run Locally
 
 ```bash
-uvicorn backend.app.main:app --reload
+python -m uvicorn app.main:app --app-dir backend --reload
 ```
+
+For a full frontend + backend local walkthrough, see [LOCAL_TESTING.md](../LOCAL_TESTING.md).
 
 ## Production Deployment
 

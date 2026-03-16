@@ -7,6 +7,8 @@ returns recommendations.
 
 ## Local Setup
 
+For a fuller contributor walkthrough, see [LOCAL_TESTING.md](./LOCAL_TESTING.md).
+
 ### Prerequisites
 
 - Node.js
@@ -29,7 +31,7 @@ returns recommendations.
    `pip install -r backend/requirements.txt`
 3. Copy `backend/.env.example` to `backend/.env` or repo `.env`.
 4. Run the API:
-   `uvicorn backend.app.main:app --reload`
+   `python -m uvicorn app.main:app --app-dir backend --reload`
 
 ## Environment Files
 
