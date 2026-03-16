@@ -132,7 +132,11 @@ export default function Page() {
       <Navbar onReset={handleReset} />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 pt-32 pb-20">
+      <main
+        className={`flex-1 flex flex-col items-center p-4 pb-20 sm:p-8 ${
+          appState === "home" ? "justify-center pt-32" : "justify-start pt-36 sm:pt-40"
+        }`}
+      >
         <AnimatePresence mode="wait">
           {appState === "home" && (
             <motion.div
