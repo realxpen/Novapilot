@@ -32,23 +32,35 @@ class Settings(BaseSettings):
     )
     aws_access_key_id: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("AWS_ACCESS_KEY_ID", "aws_access_key_id"),
+        validation_alias=AliasChoices(
+            "AWS_ACCESS_KEY_ID",
+            "NOVAPILOT_AWS_ACCESS_KEY_ID",
+            "aws_access_key_id",
+        ),
     )
     aws_secret_access_key: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key"),
+        validation_alias=AliasChoices(
+            "AWS_SECRET_ACCESS_KEY",
+            "NOVAPILOT_AWS_SECRET_ACCESS_KEY",
+            "aws_secret_access_key",
+        ),
     )
     aws_session_token: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("AWS_SESSION_TOKEN", "aws_session_token"),
+        validation_alias=AliasChoices(
+            "AWS_SESSION_TOKEN",
+            "NOVAPILOT_AWS_SESSION_TOKEN",
+            "aws_session_token",
+        ),
     )
     aws_region: str = Field(
         default="us-east-1",
-        validation_alias=AliasChoices("AWS_REGION", "aws_region"),
+        validation_alias=AliasChoices("AWS_REGION", "NOVAPILOT_AWS_REGION", "aws_region"),
     )
     usd_to_ngn_rate: float = Field(
         default=1600.0,
-        validation_alias=AliasChoices("USD_TO_NGN_RATE", "usd_to_ngn_rate"),
+        validation_alias=AliasChoices("USD_TO_NGN_RATE", "NOVAPILOT_USD_TO_NGN_RATE", "usd_to_ngn_rate"),
     )
     default_supported_sites: Annotated[List[str], NoDecode] = Field(
         default_factory=lambda: ["jumia", "amazon"]
@@ -57,11 +69,19 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_allow_origins: Annotated[List[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"],
-        validation_alias=AliasChoices("CORS_ALLOW_ORIGINS", "cors_allow_origins"),
+        validation_alias=AliasChoices(
+            "CORS_ALLOW_ORIGINS",
+            "NOVAPILOT_CORS_ALLOW_ORIGINS",
+            "cors_allow_origins",
+        ),
     )
     cors_allow_origin_regex: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("CORS_ALLOW_ORIGIN_REGEX", "cors_allow_origin_regex"),
+        validation_alias=AliasChoices(
+            "CORS_ALLOW_ORIGIN_REGEX",
+            "NOVAPILOT_CORS_ALLOW_ORIGIN_REGEX",
+            "cors_allow_origin_regex",
+        ),
     )
     use_bedrock_interpretation: bool = False
     use_bedrock_report_generation: bool = False
