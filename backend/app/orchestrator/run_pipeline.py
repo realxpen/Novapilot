@@ -570,6 +570,7 @@ class NovaPilotOrchestrator:
         interpreted: InterpretedRequest,
         allow_invalid_urls: bool = False,
     ) -> list[Any]:
+        desired_min_results = min(max(int(interpreted.top_n or 3), 1), 3)
         strict_matches: list[Any] = []
         for product in products:
             if not allow_invalid_urls and not self._is_valid_product_url(product.url, product.store):
@@ -587,7 +588,7 @@ class NovaPilotOrchestrator:
                 continue
             strict_matches.append(product)
 
-        if strict_matches:
+        if len(strict_matches) >= desired_min_results:
             self._debug_event(
                 "filter_result_strict",
                 {
@@ -597,18 +598,36 @@ class NovaPilotOrchestrator:
             )
             return strict_matches
 
-        # Fallback path: avoid returning empty just because strict category tokens were missing.
-        # Keep only obvious non-accessory items that still satisfy hard constraints.
+        # If strict filtering returns too few live listings, supplement with relaxed matches
+        # that still satisfy the hard constraints. This helps keep the final shortlist at 3-5
+        # items without inventing synthetic products when one store under-delivers.
         self._debug_event(
             "filter_strict_empty_fallback_to_relaxed",
             {
                 "input_count": len(products),
+                "strict_count": len(strict_matches),
+                "desired_min_results": desired_min_results,
                 "category": interpreted.category,
                 "budget_max": interpreted.budget_max,
             },
         )
         relaxed_matches: list[Any] = []
+        seen_keys = {
+            (
+                (getattr(product, "store", "") or "").lower().strip(),
+                (getattr(product, "name", "") or "").lower().strip(),
+                (getattr(product, "url", "") or "").strip(),
+            )
+            for product in strict_matches
+        }
         for product in products:
+            product_key = (
+                (getattr(product, "store", "") or "").lower().strip(),
+                (getattr(product, "name", "") or "").lower().strip(),
+                (getattr(product, "url", "") or "").strip(),
+            )
+            if product_key in seen_keys:
+                continue
             if not allow_invalid_urls and not self._is_valid_product_url(product.url, product.store):
                 self._log_product_drop(product, "invalid_product_url", "relaxed", interpreted)
                 continue
@@ -623,6 +642,7 @@ class NovaPilotOrchestrator:
                 self._log_product_drop(product, "over_budget", "relaxed", interpreted)
                 continue
             relaxed_matches.append(product)
+            seen_keys.add(product_key)
         self._debug_event(
             "filter_result_relaxed",
             {
@@ -630,7 +650,18 @@ class NovaPilotOrchestrator:
                 "products": relaxed_matches,
             },
         )
-        return relaxed_matches
+        combined_matches = strict_matches + relaxed_matches
+        if combined_matches:
+            self._debug_event(
+                "filter_result_combined",
+                {
+                    "strict_count": len(strict_matches),
+                    "relaxed_count": len(relaxed_matches),
+                    "combined_count": len(combined_matches),
+                    "products": combined_matches,
+                },
+            )
+        return combined_matches
 
     def _matches_category(self, name: str, category: str) -> bool:
         lowered = name.lower()

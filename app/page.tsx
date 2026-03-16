@@ -18,6 +18,8 @@ export default function Page() {
   const defaultUserLocation =
     process.env.NEXT_PUBLIC_DEFAULT_USER_LOCATION?.trim() || "Nigeria";
   const requestTimeoutMs = 240000;
+  const baseUrl =
+    (process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000").replace(/\/+$/, "");
 
   const readApiError = async (response: Response): Promise<string> => {
     const fallback = `API request failed with status ${response.status}`;
@@ -41,9 +43,6 @@ export default function Page() {
     setResult(null);
     setIsSubmitting(true);
     setAppState("results");
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000";
 
     try {
       const controller = new AbortController();
@@ -103,9 +102,6 @@ export default function Page() {
     if (!result?.job_id || result.status === "completed" || result.status === "failed") {
       return;
     }
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000";
 
     const interval = window.setInterval(async () => {
       try {
