@@ -385,10 +385,13 @@ def run_shopinverse_workflow(
     budget_currency: str | None = "NGN",
     max_results: int = 5,
     search_terms: list[str] | None = None,
+    max_search_terms: int = 4,
 ) -> dict[str, Any]:
     del country, budget_currency
 
-    cleaned_terms = _dedupe_terms([query.strip(), *[term.strip() for term in (search_terms or [query]) if term.strip()]])
+    cleaned_terms = _dedupe_terms(
+        [query.strip(), *[term.strip() for term in (search_terms or [query]) if term.strip()]]
+    )[: max(1, min(max_search_terms, 8))]
     handles = _collection_handles_for_category(category)
     candidates: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
@@ -494,6 +497,12 @@ def main() -> None:
         default=5,
         help="Maximum number of valid products to collect",
     )
+    parser.add_argument(
+        "--max-search-terms",
+        type=int,
+        default=4,
+        help="Maximum number of search terms to score against",
+    )
     args = parser.parse_args()
 
     try:
@@ -511,6 +520,7 @@ def main() -> None:
         budget_currency=args.budget_currency,
         max_results=args.max_results,
         search_terms=[str(term).strip() for term in search_terms if str(term).strip()],
+        max_search_terms=args.max_search_terms,
     )
     print(json.dumps(result, ensure_ascii=False, default=str))
 
