@@ -10,14 +10,16 @@ from __future__ import annotations
 import argparse
 import gzip
 import html
+from http.cookiejar import CookieJar
 import json
 import os
 import re
 import sys
 import time
 import zlib
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote_plus, urljoin, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
 from typing import Any
 
 from nova_act import NovaAct
@@ -393,28 +395,14 @@ def _is_relevant_for_category(name: str | None, category: str) -> bool:
     return False
 
 
-def _http_get(url: str, timeout: int = 15) -> str:
-    request = Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate, identity",
-            "Cache-Control": "no-cache",
-        },
-    )
-
-    with urlopen(request, timeout=timeout) as response:
-        raw = response.read()
-        content_type = response.headers.get("Content-Type", "")
-        content_encoding = (response.headers.get("Content-Encoding", "") or "").lower().strip()
-
-    if content_encoding == "gzip":
+def _decode_response(raw: bytes, content_type: str, content_encoding: str) -> str:
+    encoding = (content_encoding or "").lower().strip()
+    if encoding == "gzip":
         try:
             raw = gzip.decompress(raw)
         except Exception:  # noqa: BLE001
             pass
-    elif content_encoding == "deflate":
+    elif encoding == "deflate":
         try:
             raw = zlib.decompress(raw)
         except Exception:  # noqa: BLE001
@@ -426,6 +414,147 @@ def _http_get(url: str, timeout: int = 15) -> str:
     charset_match = re.search(r"charset=([\w-]+)", content_type, re.IGNORECASE)
     charset = charset_match.group(1) if charset_match else "utf-8"
     return raw.decode(charset, errors="replace")
+
+
+def _build_request_headers(referer: str | None = None) -> dict[str, str]:
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,"
+            "image/webp,image/apng,*/*;q=0.8"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, identity",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Upgrade-Insecure-Requests": "1",
+    }
+    if referer:
+        headers["Referer"] = referer
+    return headers
+
+
+def _build_http_opener():
+    return build_opener(HTTPCookieProcessor(CookieJar()))
+
+
+def _extract_page_title(html_text: str) -> str | None:
+    match = re.search(r"<title[^>]*>(.*?)</title>", html_text, flags=re.IGNORECASE | re.DOTALL)
+    return _strip_html_tags(match.group(1)) if match else None
+
+
+def _http_probe(
+    url: str,
+    timeout: int = 15,
+    opener=None,
+    referer: str | None = None,
+) -> dict[str, Any]:
+    opener = opener or _build_http_opener()
+    request = Request(url, headers=_build_request_headers(referer=referer))
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            raw = response.read()
+            content_type = response.headers.get("Content-Type", "")
+            content_encoding = (response.headers.get("Content-Encoding", "") or "").lower().strip()
+            body = _decode_response(raw, content_type, content_encoding)
+            return {
+                "url": url,
+                "status_code": getattr(response, "status", 200),
+                "ok": True,
+                "page_title": _extract_page_title(body),
+                "captcha_detected": "captcha" in body.lower(),
+                "robot_check_detected": "sorry, we just need to make sure you're not a robot" in body.lower(),
+                "search_result_cards": len(_extract_result_chunks(body)),
+            }
+    except HTTPError as exc:
+        body = exc.read()
+        content_type = exc.headers.get("Content-Type", "") if exc.headers else ""
+        content_encoding = (exc.headers.get("Content-Encoding", "") if exc.headers else "") or ""
+        decoded_body = _decode_response(body, content_type, content_encoding) if body else ""
+        return {
+            "url": url,
+            "status_code": exc.code,
+            "ok": False,
+            "error": str(exc),
+            "page_title": _extract_page_title(decoded_body),
+            "captcha_detected": "captcha" in decoded_body.lower(),
+            "robot_check_detected": "sorry, we just need to make sure you're not a robot" in decoded_body.lower(),
+            "search_result_cards": len(_extract_result_chunks(decoded_body)),
+        }
+    except URLError as exc:
+        return {
+            "url": url,
+            "status_code": None,
+            "ok": False,
+            "error": str(exc),
+            "page_title": None,
+            "captcha_detected": False,
+            "robot_check_detected": False,
+            "search_result_cards": 0,
+        }
+
+
+def _http_get(url: str, timeout: int = 15, opener=None, referer: str | None = None) -> str:
+    opener = opener or _build_http_opener()
+
+    last_exception: Exception | None = None
+    for attempt in range(1, 4):
+        request = Request(url, headers=_build_request_headers(referer=referer))
+        try:
+            with opener.open(request, timeout=timeout) as response:
+                raw = response.read()
+                content_type = response.headers.get("Content-Type", "")
+                content_encoding = (response.headers.get("Content-Encoding", "") or "").lower().strip()
+            return _decode_response(raw, content_type, content_encoding)
+        except HTTPError as exc:
+            body = exc.read()
+            content_type = exc.headers.get("Content-Type", "") if exc.headers else ""
+            content_encoding = (exc.headers.get("Content-Encoding", "") if exc.headers else "") or ""
+            decoded_body = _decode_response(body, content_type, content_encoding) if body else ""
+            last_exception = exc
+            if exc.code in {429, 503}:
+                if attempt < 3:
+                    time.sleep(attempt * 2)
+                    continue
+                if decoded_body:
+                    return decoded_body
+            raise
+        except URLError as exc:
+            last_exception = exc
+            if attempt < 3:
+                time.sleep(attempt * 2)
+                continue
+            raise
+    if last_exception:
+        raise last_exception
+    raise RuntimeError(f"Amazon fetch failed for URL: {url}")
+
+
+def collect_amazon_http_diagnostics(
+    *,
+    query: str,
+    search_terms: list[str] | None = None,
+    max_terms: int = 3,
+    search_timeout: int = 10,
+) -> dict[str, Any]:
+    cleaned_terms = _dedupe_terms([term.strip() for term in (search_terms or [query]) if term.strip()])[:max_terms]
+    opener = _build_http_opener()
+    warmup = _http_probe(AMAZON_BASE, timeout=max(5, search_timeout), opener=opener)
+    term_reports: list[dict[str, Any]] = []
+    referer = AMAZON_BASE
+    for term in cleaned_terms:
+        search_url = f"{AMAZON_BASE}/s?k={quote_plus(term)}"
+        probe = _http_probe(search_url, timeout=search_timeout, opener=opener, referer=referer)
+        probe["term"] = term
+        term_reports.append(probe)
+        referer = search_url
+    return {
+        "query": query,
+        "terms_tested": cleaned_terms,
+        "warmup": warmup,
+        "search_probes": term_reports,
+        "amazon_base": AMAZON_BASE,
+    }
 
 
 def _extract_result_chunks(html_text: str) -> list[str]:
@@ -528,11 +657,17 @@ def fallback_extract_from_search(
     errors: list[str] = []
     candidates: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
+    opener = _build_http_opener()
+
+    try:
+        _http_get(AMAZON_BASE, timeout=max(5, search_timeout), opener=opener)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"session_warmup: {exc}")
 
     for term in terms:
         search_url = f"{AMAZON_BASE}/s?k={quote_plus(term)}"
         try:
-            page = _http_get(search_url, timeout=search_timeout)
+            page = _http_get(search_url, timeout=search_timeout, opener=opener, referer=AMAZON_BASE)
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{term}: {exc}")
             continue
@@ -695,6 +830,22 @@ def run_amazon_workflow(
     collected: list[dict[str, Any]] = []
     workflow_errors: list[str] = []
     seen_urls: set[str] = set()
+    debug: dict[str, Any] = {
+        "query": query,
+        "country": country,
+        "category": category,
+        "budget_max": budget_max,
+        "budget_currency": budget_currency,
+        "target_count": target_count,
+        "search_terms": cleaned_terms,
+        "first_pass_product_count": 0,
+        "first_pass_errors": [],
+        "second_pass_product_count": 0,
+        "second_pass_errors": [],
+        "nova_act_attempted": False,
+        "nova_act_error": None,
+        "final_collected_count": 0,
+    }
 
     def _add_products(items: Any) -> None:
         if not isinstance(items, list):
@@ -742,10 +893,13 @@ def run_amazon_workflow(
         max_terms=4,
         search_timeout=10,
     )
+    debug["first_pass_product_count"] = len(first_pass.get("products") or [])
+    debug["first_pass_errors"] = [str(item) for item in first_pass.get("errors", []) if str(item).strip()]
     _add_products(first_pass.get("products"))
     workflow_errors.extend(str(item) for item in first_pass.get("errors", []) if str(item).strip())
     if len(collected) >= quick_target_count:
-        return {"products": collected[:target_count]}
+        debug["final_collected_count"] = len(collected[:target_count])
+        return {"products": collected[:target_count], "debug": debug}
 
     follow_up_terms = cleaned_terms[4:] if len(cleaned_terms) > 4 else cleaned_terms[1:]
     broad_terms = _dedupe_terms([*follow_up_terms, query])
@@ -759,13 +913,17 @@ def run_amazon_workflow(
             max_terms=3,
             search_timeout=10,
         )
+        debug["second_pass_product_count"] = len(second_pass.get("products") or [])
+        debug["second_pass_errors"] = [str(item) for item in second_pass.get("errors", []) if str(item).strip()]
         _add_products(second_pass.get("products"))
         workflow_errors.extend(str(item) for item in second_pass.get("errors", []) if str(item).strip())
     if len(collected) >= quick_target_count:
-        return {"products": collected[:target_count]}
+        debug["final_collected_count"] = len(collected[:target_count])
+        return {"products": collected[:target_count], "debug": debug}
 
     live_failure_error: str | None = None
     if NOVA_ACT_KEY:
+        debug["nova_act_attempted"] = True
         act_term = (cleaned_terms[:1] or [query])[0]
         try:
             with NovaAct(
@@ -792,23 +950,25 @@ def run_amazon_workflow(
         except Exception as exc:  # noqa: BLE001
             live_failure_error = f"Nova Act live workflow failed for amazon: {exc}"
             workflow_errors.append(live_failure_error)
+            debug["nova_act_error"] = str(exc)
 
     if collected:
-        return {"products": collected[:target_count]}
+        debug["final_collected_count"] = len(collected[:target_count])
+        return {"products": collected[:target_count], "debug": debug}
 
     if live_failure_error:
+        debug["final_collected_count"] = 0
         return {
             "products": [],
             "error": live_failure_error,
             "error_type": "live_actuator_failure",
+            "debug": debug,
         }
     if workflow_errors:
-        return {
-            "products": [],
-            "error": workflow_errors[-1],
-            "error_type": "search_fetch_failure",
-        }
-    return {"products": []}
+        debug["final_collected_count"] = 0
+        return {"products": [], "errors": workflow_errors, "debug": debug}
+    debug["final_collected_count"] = 0
+    return {"products": [], "debug": debug}
 
 
 def main() -> None:

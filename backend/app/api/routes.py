@@ -80,6 +80,28 @@ def live_preflight(timeout_seconds: float = 3.0) -> dict[str, object]:
     return report
 
 
+@router.get("/amazon-diagnostics")
+def amazon_diagnostics(
+    query: str,
+    max_search_terms: int = 3,
+    search_timeout: int = 10,
+) -> dict[str, object]:
+    """Probe Amazon reachability and search-result HTML from the live container."""
+    try:
+        from scripts.amazon_workflow import collect_amazon_http_diagnostics
+
+        report = collect_amazon_http_diagnostics(
+            query=query,
+            max_terms=max(1, min(max_search_terms, 5)),
+            search_timeout=max(3, min(search_timeout, 20)),
+        )
+        logger.info("NOVAPILOT_DEBUG amazon_diagnostics=%s", report)
+        return report
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("NOVAPILOT_DEBUG amazon_diagnostics_failed")
+        raise HTTPException(status_code=500, detail=f"Amazon diagnostics failed: {exc}") from exc
+
+
 @router.post("/run-novapilot", response_model=JobSubmissionResponse)
 def run_novapilot(request: RunNovaPilotRequest) -> JobSubmissionResponse:
     """Queue the NovaPilot report job and return instant guidance immediately."""

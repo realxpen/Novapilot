@@ -129,8 +129,8 @@ class NovaActClient(StoreAutomationClient):
             "NOVAPILOT_DEBUG nova_act_completed site=%s returncode=%s stdout_snippet=%s stderr_snippet=%s",
             site,
             completed.returncode,
-            stdout[:1000],
-            stderr[:1000],
+            stdout[:4000],
+            stderr[:4000],
         )
 
         if completed.returncode != 0:
@@ -146,6 +146,18 @@ class NovaActClient(StoreAutomationClient):
             payload_count,
             payload,
         )
+        if payload.get("debug") is not None:
+            logger.info(
+                "NOVAPILOT_DEBUG nova_act_payload_debug site=%s debug=%s",
+                site,
+                payload.get("debug"),
+            )
+        if payload.get("errors"):
+            logger.info(
+                "NOVAPILOT_DEBUG nova_act_payload_errors site=%s errors=%s",
+                site,
+                payload.get("errors"),
+            )
         payload_error = self._extract_payload_error(payload)
         if payload_error:
             raise RuntimeError(payload_error)
