@@ -119,9 +119,16 @@ class SiteRecommendationService:
         }
 
     def _should_include_amazon(self, category: str, budget_max: float) -> bool:
-        if category in {"laptop", "electronics"} and budget_max >= 700000:
-            return True
-        return category in {"audio", "gaming", "accessories"}
+        category_key = category.lower().strip()
+
+        # For Nigeria-local shopping flows, Amazon is a weak default for mainstream
+        # laptop/tablet/phone searches compared with local marketplaces, and it currently
+        # adds more failure risk than value in the live automation path.
+        if category_key in {"laptop", "tablet", "smartphone"}:
+            return False
+        if category_key == "electronics":
+            return budget_max >= 1_000_000
+        return category_key in {"audio", "gaming", "accessories"}
 
     def _is_nigeria_market(self, user_location: Optional[str], budget_currency: str) -> bool:
         location = (user_location or "").lower()

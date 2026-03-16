@@ -1152,11 +1152,11 @@ def run_jumia_workflow(
     _add_products(first_pass.get("products"))
     workflow_errors.extend(str(item) for item in first_pass.get("errors", []) if str(item).strip())
     search_pages_loaded += int(first_pass.get("search_pages_loaded", 0) or 0)
-    if len(collected) >= quick_target_count:
+    if len(collected) >= target_count:
         return _finish({"products": collected[:target_count]}, "enough_products_after_first_pass")
 
     # 2) Secondary deterministic pass: keep trying concrete product names before the raw query.
-    if len(collected) < quick_target_count and time.monotonic() < hard_deadline:
+    if len(collected) < target_count and time.monotonic() < hard_deadline:
         second_phase_start = time.monotonic()
         follow_up_terms = cleaned_terms[4:] if len(cleaned_terms) > 4 else cleaned_terms[1:]
         broad_terms = _dedupe_terms([*follow_up_terms, query])
@@ -1164,7 +1164,7 @@ def run_jumia_workflow(
             query=query,
             category=category,
             budget_max=budget_max,
-            max_results=quick_target_count - len(collected),
+            max_results=target_count - len(collected),
             search_terms=broad_terms,
             deadline_ts=hard_deadline,
             max_terms=3,

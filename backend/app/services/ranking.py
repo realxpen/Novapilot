@@ -165,6 +165,29 @@ class RankingService:
                 len(products),
                 len(deduped),
             )
+
+        # If family-based dedupe collapses the live shortlist below 3 items, fall back to a
+        # looser URL/name-based uniqueness check so we keep enough real variants to compare.
+        if len(deduped) < 3 and len(products) >= 3:
+            url_unique: list[Product] = []
+            seen_keys: set[str] = set()
+            for product in products:
+                key = (product.url or "").strip().lower()
+                if not key:
+                    key = f"{product.store.strip().lower()}::{product.name.strip().lower()}"
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                url_unique.append(product)
+
+            if len(url_unique) > len(deduped):
+                logger.info(
+                    "NOVAPILOT_DEBUG ranking_dedup_fallback before=%s family_after=%s url_after=%s",
+                    len(products),
+                    len(deduped),
+                    len(url_unique),
+                )
+                return url_unique
         return deduped
 
     def _product_dedupe_key(self, product: Product) -> str:

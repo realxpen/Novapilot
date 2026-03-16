@@ -53,4 +53,4 @@ Production deployment is designed for:
 
 - If the query names sites, NovaPilot uses those sites only.
 - If the query does not name sites, Nova Lite recommends sites using location, category, budget, and expected availability.
-- For Nigeria, the fallback priority is `jumia`, `konga`, `slot`, `jiji`, then `amazon` when relevant.
+- For Nigeria, the fallback priority is `jumia`, then `amazon` when relevant.
