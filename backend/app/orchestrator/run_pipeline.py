@@ -645,6 +645,36 @@ class NovaPilotOrchestrator:
                     "products": combined_matches,
                 },
             )
+            return combined_matches
+
+        # Amazon search results can still be relevant even when terse titles fail the
+        # generic category heuristics. If source-side Amazon extraction already returned
+        # valid, priced, non-blocked products, keep them instead of discarding the store.
+        amazon_rescue_matches: list[Any] = []
+        for product in products:
+            store_key = (getattr(product, "store", "") or "").lower().strip()
+            if store_key != "amazon":
+                continue
+            if not allow_invalid_urls and not self._is_valid_product_url(product.url, product.store):
+                continue
+            if self._is_blocked_for_category(product.name, interpreted.category):
+                continue
+            if product.price <= 0:
+                continue
+            comparable_price = self._price_in_budget_currency(product, interpreted)
+            if interpreted.budget_max and comparable_price > interpreted.budget_max:
+                continue
+            amazon_rescue_matches.append(product)
+
+        if amazon_rescue_matches:
+            self._debug_event(
+                "filter_result_amazon_rescue",
+                {
+                    "count": len(amazon_rescue_matches),
+                    "products": amazon_rescue_matches,
+                },
+            )
+            return amazon_rescue_matches
         return combined_matches
 
     def _matches_category(self, name: str, category: str) -> bool:
