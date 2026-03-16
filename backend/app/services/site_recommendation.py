@@ -11,7 +11,7 @@ from app.schemas.response import InterpretedRequest
 class SiteRecommendationService:
     """Recommend shopping sites from request context with model and rule fallbacks."""
 
-    NIGERIA_PRIORITY = ["jumia", "shopinverse", "konga", "slot", "jiji"]
+    NIGERIA_PRIORITY = ["jumia", "konga", "slot", "jiji"]
 
     def __init__(self, recommendation_client: Optional[SiteRecommendationClient] = None) -> None:
         self.recommendation_client = recommendation_client
@@ -100,9 +100,9 @@ class SiteRecommendationService:
         recommended: List[str] = []
         if is_nigeria:
             recommended.extend(site for site in self.NIGERIA_PRIORITY if site in allowed_sites)
-            rationale = "Nigeria fallback prioritized local marketplaces first, including ShopInverse for stronger local device inventory."
+            rationale = "Nigeria fallback prioritized Jumia first for local device availability."
         else:
-            recommended.extend(site for site in ["shopinverse", "jumia", "konga", "slot", "jiji", "amazon"] if site in allowed_sites)
+            recommended.extend(site for site in ["jumia", "konga", "slot", "jiji", "amazon"] if site in allowed_sites)
             rationale = "Fallback ranked broadly available marketplaces by expected category and availability fit."
 
         trimmed = self._trim_recommendations(self._dedupe_sites(recommended))

@@ -33,7 +33,6 @@ class NovaPilotOrchestrator:
 
     SITE_ALIASES: dict[str, tuple[str, ...]] = {
         "jumia": ("jumia",),
-        "shopinverse": ("shopinverse", "shop inverse", "inverse"),
     }
 
     def __init__(self) -> None:
@@ -546,7 +545,7 @@ class NovaPilotOrchestrator:
         ]
 
     def _get_live_enabled_sites(self) -> list[str]:
-        return ["jumia", "shopinverse"]
+        return ["jumia"]
 
     def _filter_products(
         self,
