@@ -3,6 +3,8 @@ FROM mcr.microsoft.com/playwright/python:v1.56.0-jammy
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/backend:/app \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    NOVA_ACT_SKIP_PLAYWRIGHT_INSTALL=1 \
     PORT=8000
 
 WORKDIR /app
