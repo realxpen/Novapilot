@@ -23,6 +23,8 @@ from typing import Any
 from nova_act import NovaAct
 
 NOVA_ACT_KEY = os.getenv("NOVA_ACT_API_KEY") or os.getenv("NOVA_API_KEY")
+AMAZON_NOVA_ACT_TIMEOUT_SECONDS = int(os.getenv("NOVAPILOT_AMAZON_NOVA_ACT_TIMEOUT_SECONDS", "45"))
+AMAZON_NOVA_ACT_MAX_STEPS = int(os.getenv("NOVAPILOT_AMAZON_NOVA_ACT_MAX_STEPS", "10"))
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -782,8 +784,8 @@ def run_amazon_workflow(
                         min(2, max(1, target_count - len(collected))),
                     ),
                     schema=build_schema(min(2, max(1, target_count - len(collected)))),
-                    max_steps=6,
-                    timeout=20,
+                    max_steps=max(6, AMAZON_NOVA_ACT_MAX_STEPS),
+                    timeout=max(20, AMAZON_NOVA_ACT_TIMEOUT_SECONDS),
                 ).parsed_response
                 products = payload.get("products") if isinstance(payload, dict) else None
                 _add_products(products)
