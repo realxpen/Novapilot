@@ -1,11 +1,12 @@
 """Application configuration loaded from environment variables."""
 
+import json
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 from pydantic import AliasChoices, Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -49,12 +50,12 @@ class Settings(BaseSettings):
         default=1600.0,
         validation_alias=AliasChoices("USD_TO_NGN_RATE", "usd_to_ngn_rate"),
     )
-    default_supported_sites: List[str] = Field(
+    default_supported_sites: Annotated[List[str], NoDecode] = Field(
         default_factory=lambda: ["jumia", "amazon"]
     )
     default_currency: str = "NGN"
     log_level: str = "INFO"
-    cors_allow_origins: List[str] = Field(
+    cors_allow_origins: Annotated[List[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"],
         validation_alias=AliasChoices("CORS_ALLOW_ORIGINS", "cors_allow_origins"),
     )
@@ -77,16 +78,32 @@ class Settings(BaseSettings):
     @field_validator("default_supported_sites", mode="before")
     @classmethod
     def parse_supported_sites(cls, value: object) -> object:
-        """Allow comma-separated env var values for supported sites."""
+        """Allow JSON arrays or comma-separated env var values for supported sites."""
         if isinstance(value, str):
+            normalized = value.strip()
+            if normalized.startswith("["):
+                try:
+                    parsed = json.loads(normalized)
+                except json.JSONDecodeError:
+                    parsed = None
+                if isinstance(parsed, list):
+                    return [str(site).strip().lower() for site in parsed if str(site).strip()]
             return [site.strip().lower() for site in value.split(",") if site.strip()]
         return value
 
     @field_validator("cors_allow_origins", mode="before")
     @classmethod
     def parse_cors_allow_origins(cls, value: object) -> object:
-        """Allow comma-separated env var values for CORS origins."""
+        """Allow JSON arrays or comma-separated env var values for CORS origins."""
         if isinstance(value, str):
+            normalized = value.strip()
+            if normalized.startswith("["):
+                try:
+                    parsed = json.loads(normalized)
+                except json.JSONDecodeError:
+                    parsed = None
+                if isinstance(parsed, list):
+                    return [str(origin).strip() for origin in parsed if str(origin).strip()]
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
