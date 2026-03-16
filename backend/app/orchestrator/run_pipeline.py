@@ -434,30 +434,14 @@ class NovaPilotOrchestrator:
                 "allowed_sites": allowed_sites,
             }
 
-        recommendation = self.site_recommendation.recommend(
-            query=query,
-            interpreted=interpreted,
-            allowed_sites=allowed_sites,
-            user_location=user_location,
-        )
-        recommended_sites = recommendation.get("sites", [])
-        if recommended_sites:
-            meta = {
-                "selected_sites": recommended_sites,
-                "source": recommendation.get("source", "fallback"),
-                "allowed_sites": allowed_sites,
-                "confidence": recommendation.get("confidence"),
-                "rationale": recommendation.get("rationale"),
-            }
-            excluded_sites = recommendation.get("excluded_sites")
-            if excluded_sites:
-                meta["excluded_sites"] = excluded_sites
-            return recommended_sites, meta
-
+        # If the user did not explicitly name a store, search all enabled live stores
+        # instead of narrowing to a single marketplace. This keeps Amazon and Jumia in
+        # the same run by default.
         return allowed_sites, {
             "selected_sites": allowed_sites,
-            "source": "defaults",
+            "source": "automatic_all",
             "allowed_sites": allowed_sites,
+            "rationale": "No specific store was mentioned, so all enabled supported stores were searched.",
         }
 
     def _build_guidance_payload(
