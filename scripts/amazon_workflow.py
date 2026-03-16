@@ -744,10 +744,7 @@ def build_schema(max_results: int) -> dict[str, Any]:
 
 
 def build_starting_page(query: str, search_terms: list[str]) -> str:
-    first_term = next((term.strip() for term in search_terms if term.strip()), query.strip())
-    if not first_term:
-        return f"{AMAZON_BASE}/"
-    return f"{AMAZON_BASE}/s?k={quote_plus(first_term)}"
+    return f"{AMAZON_BASE}/"
 
 
 def build_prompt(
@@ -791,9 +788,12 @@ def build_prompt(
         )
 
     return (
-        "You are already on Amazon search results for the first concrete product term.\n"
-        f"Use these search terms in order only when needed: {ordered_terms}.\n"
-        "Stay on Amazon search results pages.\n"
+        "You are starting on Amazon.\n"
+        f"Use these search terms in order: {ordered_terms}.\n"
+        "If you are on the Amazon homepage, use the main search box to search the first term.\n"
+        "If a location modal, sign-in prompt, or dismissible popover appears, close it and continue.\n"
+        "If a simple robot/captcha page appears, try one refresh and continue if the search results become available.\n"
+        "Stay on Amazon search results pages after you search.\n"
         "Stay on amazon.com only.\n"
         "Do not inspect sponsored rows, carousels, ads, or unrelated widgets.\n"
         f"Ignore and skip {excluded}.\n"
