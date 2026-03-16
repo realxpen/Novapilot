@@ -23,6 +23,7 @@ class ExtractionService:
 
     STORE_BASE_URLS = {
         "jumia": "https://www.jumia.com.ng",
+        "shopinverse": "https://shopinverse.com",
         "konga": "https://www.konga.com",
         "slot": "https://slot.ng",
         "jiji": "https://jiji.ng",
@@ -33,7 +34,7 @@ class ExtractionService:
         """Normalize products from one store with graceful field handling."""
         normalized: List[Product] = []
         for index, item in enumerate(raw_products):
-            if site in {"jumia", "konga", "slot", "jiji"}:
+            if site in {"jumia", "shopinverse", "konga", "slot", "jiji"}:
                 product = self._normalize_marketplace(site, item)
             elif site == "amazon":
                 product = self._normalize_amazon(item)
@@ -119,6 +120,14 @@ class ExtractionService:
             return None
         if site.lower() == "jumia":
             if "jumia.com.ng" not in lowered and "jumia.is" not in lowered:
+                return None
+        if site.lower() == "shopinverse":
+            allowed_hosts = (
+                "shopinverse.com",
+                "cdn.shopify.com",
+                "shopify.com",
+            )
+            if not any(host in lowered for host in allowed_hosts):
                 return None
         if site.lower() == "amazon":
             allowed_hosts = (

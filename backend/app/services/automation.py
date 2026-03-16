@@ -107,6 +107,9 @@ class AutomationService:
         elif site_key == "amazon":
             payload["max_results"] = max(5, int(interpreted.top_n or 5))
             payload["max_search_terms"] = 4
+        elif site_key == "shopinverse":
+            payload["max_results"] = max(5, int(interpreted.top_n or 5))
+            payload["max_search_terms"] = 4
         else:
             payload["max_results"] = max(4, min(int(interpreted.top_n or 4), 5))
             payload["max_search_terms"] = 3
@@ -261,11 +264,11 @@ class AutomationService:
 
     def _finalize_search_terms(self, site_key: str, query: str, terms: List[str]) -> List[str]:
         normalized_query = " ".join(query.strip().split())
-        if site_key != "amazon":
+        if site_key not in {"amazon", "shopinverse"}:
             return self._dedupe_terms(terms)
 
-        # Amazon often responds better to the broad natural-language intent first,
-        # then to concrete fallback model searches if needed.
+        # Amazon and ShopInverse often respond better to the broad natural-language
+        # intent first, then to concrete fallback model searches if needed.
         searchable_query = re.sub(r"\s+", " ", re.sub(r"[^\w\s/+.,-]", " ", normalized_query)).strip()
         return self._dedupe_terms([normalized_query, searchable_query, *terms])
 

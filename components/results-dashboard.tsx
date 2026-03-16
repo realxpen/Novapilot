@@ -708,7 +708,7 @@ export function ResultsDashboard({
       {!result && !error && isLoading && (
         <WaitingState
           query={query}
-          sites={["jumia"]}
+          sites={["jumia", "shopinverse"]}
           status="starting"
           nextStep="Preparing your instant guidance and starting the live market report."
           finalPreview={[]}

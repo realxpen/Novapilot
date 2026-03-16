@@ -42,13 +42,13 @@ class NovaActClient(StoreAutomationClient):
         self.timeout_seconds = settings.nova_act_timeout_seconds
         self.repo_root = Path(__file__).resolve().parents[3]
         self.script_by_site = {
-            "amazon": self.repo_root / "scripts" / "amazon_workflow.py",
             "jumia": self.repo_root / "scripts" / "jumia_workflow.py",
+            "shopinverse": self.repo_root / "scripts" / "shopinverse_workflow.py",
         }
 
     def run_store_workflow(self, site: str, interpreted_request: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Execute a live workflow script and return extracted product dictionaries."""
-        if not self.nova_api_key:
+        if not self.nova_api_key and site.lower() != "shopinverse":
             raise RuntimeError("Set NOVA_API_KEY in backend/.env before running live Nova Act workflows.")
 
         script_path = self.script_by_site.get(site.lower())
@@ -70,7 +70,7 @@ class NovaActClient(StoreAutomationClient):
         if budget_max is not None:
             command.extend(["--budget-max", str(budget_max)])
         budget_currency = str(interpreted_request.get("budget_currency") or "").strip()
-        if budget_currency and site.lower() == "amazon":
+        if budget_currency and site.lower() in {"amazon", "shopinverse"}:
             command.extend(["--budget-currency", budget_currency])
         max_results = interpreted_request.get("max_results")
         if max_results is not None:
@@ -78,7 +78,7 @@ class NovaActClient(StoreAutomationClient):
         max_search_terms = interpreted_request.get("max_search_terms")
         if max_search_terms is not None:
             command.extend(["--max-search-terms", str(max_search_terms)])
-        if site.lower() == "amazon":
+        if site.lower() in {"amazon", "shopinverse"}:
             country = str(interpreted_request.get("user_location") or "Nigeria").strip()
             command.extend(["--country", country])
 

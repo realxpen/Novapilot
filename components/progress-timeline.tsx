@@ -21,7 +21,7 @@ interface ProgressTimelineProps {
 const STEPS = [
   { id: "understanding", label: "Understanding request", icon: Brain },
   { id: "jumia", label: "Searching Jumia", icon: ShoppingCart },
-  { id: "amazon", label: "Searching Amazon", icon: Search },
+  { id: "shopinverse", label: "Searching ShopInverse", icon: Search },
   { id: "extracting", label: "Extracting product details", icon: FileText },
   { id: "comparing", label: "Comparing results", icon: GitCompare },
   { id: "generating", label: "Generating recommendation", icon: Sparkles },

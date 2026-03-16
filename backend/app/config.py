@@ -63,7 +63,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("USD_TO_NGN_RATE", "NOVAPILOT_USD_TO_NGN_RATE", "usd_to_ngn_rate"),
     )
     default_supported_sites: Annotated[List[str], NoDecode] = Field(
-        default_factory=lambda: ["jumia", "amazon"]
+        default_factory=lambda: ["jumia", "shopinverse"]
     )
     default_currency: str = "NGN"
     log_level: str = "INFO"

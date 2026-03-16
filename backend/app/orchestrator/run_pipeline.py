@@ -33,7 +33,7 @@ class NovaPilotOrchestrator:
 
     SITE_ALIASES: dict[str, tuple[str, ...]] = {
         "jumia": ("jumia",),
-        "amazon": ("amazon",),
+        "shopinverse": ("shopinverse", "shop inverse", "inverse"),
     }
 
     def __init__(self) -> None:
@@ -546,7 +546,7 @@ class NovaPilotOrchestrator:
         ]
 
     def _get_live_enabled_sites(self) -> list[str]:
-        return ["amazon", "jumia"]
+        return ["jumia", "shopinverse"]
 
     def _filter_products(
         self,
@@ -647,13 +647,13 @@ class NovaPilotOrchestrator:
             )
             return combined_matches
 
-        # Amazon search results can still be relevant even when terse titles fail the
-        # generic category heuristics. If source-side Amazon extraction already returned
+        # ShopInverse results can still be relevant even when terse titles fail the
+        # generic category heuristics. If source-side deterministic extraction already returned
         # valid, priced, non-blocked products, keep them instead of discarding the store.
-        amazon_rescue_matches: list[Any] = []
+        shopinverse_rescue_matches: list[Any] = []
         for product in products:
             store_key = (getattr(product, "store", "") or "").lower().strip()
-            if store_key != "amazon":
+            if store_key != "shopinverse":
                 continue
             if not allow_invalid_urls and not self._is_valid_product_url(product.url, product.store):
                 continue
@@ -664,17 +664,17 @@ class NovaPilotOrchestrator:
             comparable_price = self._price_in_budget_currency(product, interpreted)
             if interpreted.budget_max and comparable_price > interpreted.budget_max:
                 continue
-            amazon_rescue_matches.append(product)
+            shopinverse_rescue_matches.append(product)
 
-        if amazon_rescue_matches:
+        if shopinverse_rescue_matches:
             self._debug_event(
-                "filter_result_amazon_rescue",
+                "filter_result_shopinverse_rescue",
                 {
-                    "count": len(amazon_rescue_matches),
-                    "products": amazon_rescue_matches,
+                    "count": len(shopinverse_rescue_matches),
+                    "products": shopinverse_rescue_matches,
                 },
             )
-            return amazon_rescue_matches
+            return shopinverse_rescue_matches
         return combined_matches
 
     def _matches_category(self, name: str, category: str) -> bool:
@@ -799,6 +799,13 @@ class NovaPilotOrchestrator:
             if "amazon." not in lowered:
                 return False
             if "/s?" in lowered and "k=" in lowered:
+                return False
+        if store_key == "shopinverse":
+            if "shopinverse.com" not in lowered:
+                return False
+            if "/collections/" in lowered and "/products/" not in lowered:
+                return False
+            if lowered in {"https://shopinverse.com", "https://shopinverse.com/"}:
                 return False
         return True
 

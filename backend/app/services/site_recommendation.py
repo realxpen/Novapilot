@@ -11,7 +11,7 @@ from app.schemas.response import InterpretedRequest
 class SiteRecommendationService:
     """Recommend shopping sites from request context with model and rule fallbacks."""
 
-    NIGERIA_PRIORITY = ["jumia", "konga", "slot", "jiji"]
+    NIGERIA_PRIORITY = ["jumia", "shopinverse", "konga", "slot", "jiji"]
 
     def __init__(self, recommendation_client: Optional[SiteRecommendationClient] = None) -> None:
         self.recommendation_client = recommendation_client
@@ -100,11 +100,9 @@ class SiteRecommendationService:
         recommended: List[str] = []
         if is_nigeria:
             recommended.extend(site for site in self.NIGERIA_PRIORITY if site in allowed_sites)
-            if "amazon" in allowed_sites and self._should_include_amazon(category, budget_max):
-                recommended.append("amazon")
-            rationale = "Nigeria fallback prioritized local marketplaces first and included Amazon only when category or budget suggested it."
+            rationale = "Nigeria fallback prioritized local marketplaces first, including ShopInverse for stronger local device inventory."
         else:
-            recommended.extend(site for site in ["amazon", "jumia", "konga", "slot", "jiji"] if site in allowed_sites)
+            recommended.extend(site for site in ["shopinverse", "jumia", "konga", "slot", "jiji", "amazon"] if site in allowed_sites)
             rationale = "Fallback ranked broadly available marketplaces by expected category and availability fit."
 
         trimmed = self._trim_recommendations(self._dedupe_sites(recommended))
@@ -117,18 +115,6 @@ class SiteRecommendationService:
             "confidence": 0.55,
             "rationale": rationale,
         }
-
-    def _should_include_amazon(self, category: str, budget_max: float) -> bool:
-        category_key = category.lower().strip()
-
-        # For Nigeria-local shopping flows, Amazon is a weak default for mainstream
-        # laptop/tablet/phone searches compared with local marketplaces, and it currently
-        # adds more failure risk than value in the live automation path.
-        if category_key in {"laptop", "tablet", "smartphone"}:
-            return False
-        if category_key == "electronics":
-            return budget_max >= 1_000_000
-        return category_key in {"audio", "gaming", "accessories"}
 
     def _is_nigeria_market(self, user_location: Optional[str], budget_currency: str) -> bool:
         location = (user_location or "").lower()
