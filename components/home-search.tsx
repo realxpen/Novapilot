@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchInput } from "./search-input";
 import { ExamplePromptList } from "./example-prompt-list";
 
 interface HomeSearchProps {
+  initialQuery?: string;
   onSearch: (query: string) => void;
 }
 
@@ -14,8 +15,12 @@ const SUGGESTIONS = [
   "Tablets for graphic design",
 ];
 
-export function HomeSearch({ onSearch }: HomeSearchProps) {
-  const [query, setQuery] = useState("");
+export function HomeSearch({ initialQuery = "", onSearch }: HomeSearchProps) {
+  const [query, setQuery] = useState(initialQuery);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

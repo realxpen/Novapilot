@@ -11,6 +11,7 @@ export function SearchInput({ query, setQuery, onSubmit }: SearchInputProps) {
     <form onSubmit={onSubmit} className="w-full relative max-w-3xl mx-auto">
       <div className="relative flex flex-col bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-zinc-200/80 focus-within:ring-2 focus-within:ring-zinc-900 transition-all w-full overflow-hidden">
         <textarea
+          autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask anything..."

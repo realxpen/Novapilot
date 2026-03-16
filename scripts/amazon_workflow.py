@@ -443,6 +443,50 @@ def _extract_page_title(html_text: str) -> str | None:
     return _strip_html_tags(match.group(1)) if match else None
 
 
+def _extract_detail_page_image(html_text: str) -> str | None:
+    patterns = [
+        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+        r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+        r'"hiRes"\s*:\s*"([^"]+)"',
+        r'"large"\s*:\s*"([^"]+)"',
+        r'"mainUrl"\s*:\s*"([^"]+)"',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, html_text, flags=re.IGNORECASE | re.DOTALL)
+        if not match:
+            continue
+        candidate = html.unescape(match.group(1)).replace("\\/", "/")
+        normalized = _normalize_image_url(candidate)
+        if normalized:
+            return normalized
+    return None
+
+
+def _enrich_product_from_detail_page(
+    item: dict[str, Any],
+    *,
+    opener,
+    timeout: int,
+) -> dict[str, Any]:
+    product_url = _normalize_amazon_product_url(item.get("product_url"))
+    if not product_url:
+        return item
+    try:
+        page = _http_get(product_url, timeout=timeout, opener=opener, referer=AMAZON_BASE)
+    except Exception:  # noqa: BLE001
+        return item
+
+    detail_image = _extract_detail_page_image(page)
+    if detail_image:
+        item["image_url"] = detail_image
+    detail_title = _extract_page_title(page)
+    if detail_title and detail_title.lower() != "amazon.com":
+        cleaned_title = re.sub(r"\s*:\s*amazon\.com.*$", "", detail_title, flags=re.IGNORECASE).strip()
+        if cleaned_title and cleaned_title.lower() != "amazon.com":
+            item["details"] = cleaned_title
+    return item
+
+
 def _http_probe(
     url: str,
     timeout: int = 15,
@@ -704,7 +748,16 @@ def fallback_extract_from_search(
             break
 
     selected = _select_best_candidates(candidates, target_count=max_results)
-    return {"products": selected, "errors": errors}
+    enriched: list[dict[str, Any]] = []
+    for item in selected:
+        enriched.append(
+            _enrich_product_from_detail_page(
+                item,
+                opener=opener,
+                timeout=max(6, min(search_timeout, 12)),
+            )
+        )
+    return {"products": enriched, "errors": errors}
 
 
 def build_schema(max_results: int) -> dict[str, Any]:
@@ -800,16 +853,16 @@ def build_prompt(
         f"Collect up to {max_results} real {product_type} listings from visible search result cards only.\n"
         "Inspect up to the first 8 visible strong matching cards.\n"
         "Compare those visible cards and return the best matches, not just the first ones you see.\n"
-        "Do not open product detail pages.\n"
+        "Open product detail pages only for the final shortlisted candidates when needed to capture a canonical product URL and primary image URL.\n"
         "If the current results are irrelevant, use the next search term in the Amazon search box.\n"
-        "Use the raw user sentence only as a last fallback.\n"
+        "Use the raw user sentence first, then fall back to the more concrete follow-up terms if needed.\n"
         "Stop as soon as you have enough valid products."
         f"{budget_guard}\n"
-        "Prefer extracting directly from the visible search cards.\n"
+        "Prefer extracting title, price, and rating directly from the visible search cards.\n"
         "Return only product detail page URLs, never search or category URLs.\n"
         "Ensure 'product_url' is an absolute https URL on www.amazon.com and points to a real product page.\n"
         "Do not return amazon.ng, search URLs, redirect URLs, or category URLs.\n"
-        "Use the actual visible product image URL from the search card when available; otherwise return null.\n"
+        "For image_url, use the main product image from the product detail page when available; otherwise use the search-card image.\n"
         "Use 'rating' and 'details' from the search results when visible; otherwise return null.\n"
         "Return only the structured response requested by the schema."
     )
@@ -824,7 +877,7 @@ def run_amazon_workflow(
     max_results: int = 5,
     search_terms: list[str] | None = None,
 ) -> Any:
-    cleaned_terms = _dedupe_terms([term.strip() for term in (search_terms or [query]) if term.strip()])
+    cleaned_terms = _dedupe_terms([query.strip(), *[term.strip() for term in (search_terms or [query]) if term.strip()]])
     target_count = max(1, min(max_results, 5))
     quick_target_count = min(target_count, 3)
     collected: list[dict[str, Any]] = []

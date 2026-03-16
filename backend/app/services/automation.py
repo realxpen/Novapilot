@@ -165,22 +165,23 @@ class AutomationService:
         site: str | None = None,
     ) -> List[str]:
         lowered_query = query.lower()
+        site_key = (site or "").strip().lower()
         if "powerbank" in lowered_query or "power bank" in lowered_query:
-            return [
+            terms = [
                 "Anker power bank 20000mAh",
                 "Oraimo power bank 20000mAh",
                 "Xiaomi power bank 20000mAh",
                 "Samsung power bank 10000mAh",
                 "power bank fast charging 20000mAh",
             ]
+            return self._finalize_search_terms(site_key, query, terms)
 
         category = interpreted.category.lower()
         use_case = interpreted.use_case.lower()
-        site_key = (site or "").strip().lower()
 
         if category == "laptop" and use_case == "programming":
             if site_key == "jumia":
-                return [
+                terms = [
                     "Dell Latitude 7490 16GB 512GB laptop",
                     "HP EliteBook 840 G6 16GB 512GB laptop",
                     "Lenovo IdeaPad 3 Core i5 16GB 512GB laptop",
@@ -188,26 +189,29 @@ class AutomationService:
                     "HP ProBook 450 G7 16GB 512GB laptop",
                     "laptop 16GB 512GB Core i5",
                 ]
-            return [
-                "ThinkPad T480 16GB 512GB laptop",
-                "ThinkPad T490 16GB 512GB laptop",
-                "HP EliteBook 840 G6 16GB 512GB laptop",
-                "HP EliteBook 840 G7 16GB 512GB laptop",
-                "Dell Latitude 7400 16GB 512GB laptop",
-                "Dell Latitude 7490 16GB 512GB laptop",
-                "laptop 16GB 512GB Core i5",
-            ]
+            else:
+                terms = [
+                    "ThinkPad T480 16GB 512GB laptop",
+                    "ThinkPad T490 16GB 512GB laptop",
+                    "HP EliteBook 840 G6 16GB 512GB laptop",
+                    "HP EliteBook 840 G7 16GB 512GB laptop",
+                    "Dell Latitude 7400 16GB 512GB laptop",
+                    "Dell Latitude 7490 16GB 512GB laptop",
+                    "laptop 16GB 512GB Core i5",
+                ]
+            return self._finalize_search_terms(site_key, query, terms)
 
         if category == "laptop" and use_case == "ui/ux design":
-            return [
+            terms = [
                 "HP Envy x360 16GB 512GB laptop",
                 "Dell Inspiron 14 16GB 512GB laptop",
                 "Lenovo IdeaPad 5 16GB 512GB laptop",
                 "laptop 16GB 512GB Ryzen 5",
             ]
+            return self._finalize_search_terms(site_key, query, terms)
 
         if category == "smartphone":
-            return [
+            terms = [
                 "Samsung Galaxy A55 8GB 256GB phone",
                 "Samsung Galaxy A35 8GB 256GB phone",
                 "Redmi Note 13 Pro 8GB 256GB phone",
@@ -216,9 +220,10 @@ class AutomationService:
                 "Tecno Camon 30 phone",
                 "phone 8GB 256GB",
             ]
+            return self._finalize_search_terms(site_key, query, terms)
 
         if category == "tablet" and use_case == "ui/ux design":
-            return [
+            terms = [
                 "Apple iPad Air 5 256GB tablet",
                 "Apple iPad Pro 11 128GB tablet",
                 "Samsung Galaxy Tab S9 FE 8GB 256GB tablet",
@@ -226,9 +231,10 @@ class AutomationService:
                 "Xiaomi Pad 6 8GB 256GB tablet",
                 "Redmi Pad Pro 8GB 256GB tablet",
             ]
+            return self._finalize_search_terms(site_key, query, terms)
 
         if category == "tablet":
-            return [
+            terms = [
                 "Samsung Galaxy Tab S9 FE 8GB 256GB tablet",
                 "Samsung Galaxy Tab S8 8GB 128GB tablet",
                 "Xiaomi Pad 6 8GB 256GB tablet",
@@ -236,16 +242,32 @@ class AutomationService:
                 "Apple iPad Air 5 256GB tablet",
                 "tablet 8GB 128GB standalone tablet",
             ]
+            return self._finalize_search_terms(site_key, query, terms)
 
         if category == "audio":
-            return [
+            terms = [
                 "Sony WH-CH720N headphones",
                 "Soundcore Space One headphones",
                 "JBL Tune 770NC headphones",
                 "noise cancelling headphones",
             ]
+            return self._finalize_search_terms(site_key, query, terms)
 
-        return self._build_generic_search_terms(interpreted, query)
+        return self._finalize_search_terms(
+            site_key,
+            query,
+            self._build_generic_search_terms(interpreted, query),
+        )
+
+    def _finalize_search_terms(self, site_key: str, query: str, terms: List[str]) -> List[str]:
+        normalized_query = " ".join(query.strip().split())
+        if site_key != "amazon":
+            return self._dedupe_terms(terms)
+
+        # Amazon often responds better to the broad natural-language intent first,
+        # then to concrete fallback model searches if needed.
+        searchable_query = re.sub(r"\s+", " ", re.sub(r"[^\w\s/+.,-]", " ", normalized_query)).strip()
+        return self._dedupe_terms([normalized_query, searchable_query, *terms])
 
     def _build_generic_search_terms(self, interpreted: InterpretedRequest, query: str) -> List[str]:
         category_keyword = {

@@ -91,11 +91,13 @@ export default function Page() {
   };
 
   const handleReset = () => {
-    setSearchQuery("");
     setResult(null);
     setError(null);
     setIsSubmitting(false);
     setAppState("home");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   };
 
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function Page() {
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               className="w-full max-w-4xl"
             >
-              <HomeSearch onSearch={handleSearch} />
+              <HomeSearch initialQuery={searchQuery} onSearch={handleSearch} />
             </motion.div>
           )}
 
